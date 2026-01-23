@@ -2,58 +2,71 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>comersuro Directo</title>
+    <title>comersuro Directo - Control Inteligente</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .p-nuevo { background: #fff3cd; border-left: 8px solid #ffc107; margin-bottom: 8px; cursor: pointer; padding: 10px; border-radius: 5px; }
-        .p-completo { background: #d1e7dd; border-left: 8px solid #198754; margin-bottom: 8px; padding: 10px; border-radius: 5px; opacity: 0.6; }
-        .scroll { max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
+        .p-nuevo { background: #fff3cd; border-left: 8px solid #ffc107; margin-bottom: 8px; cursor: pointer; padding: 10px; border-radius: 5px; transition: 0.2s; }
+        .p-nuevo:hover { background: #ffeaa7; transform: scale(1.02); }
+        .p-completo { background: #d1e7dd; border-left: 8px solid #198754; margin-bottom: 8px; padding: 10px; border-radius: 5px; opacity: 0.8; cursor: not-allowed; }
+        .scroll { max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 8px; background: #fff; }
+        .badge-info { background: #0078d4; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.8em; }
     </style>
 </head>
 <body class="bg-light">
 
-<div class="bg-primary text-white text-center p-3 mb-4"><h2>Control Logístico Directo</h2></div>
+<div class="bg-primary text-white text-center p-3 mb-4 shadow"><h2>Control Logístico comersuro</h2></div>
 
 <div class="container">
     <div class="row">
         <div class="col-md-4">
-            <div class="card p-3">
-                <h5>1. Registrar Pedido</h5>
-                <input type="number" id="cant" class="form-control mb-2" placeholder="Cantidad">
+            <div class="card p-3 shadow-sm">
+                <h5 class="text-primary border-bottom pb-2">1. Registrar Pedido</h5>
+                <label class="small fw-bold">Cantidad de Contenedores</label>
+                <input type="number" id="cant" class="form-control mb-2" placeholder="Ej: 3">
+                
+                <label class="small fw-bold">Fecha Pedido</label>
                 <input type="date" id="fecha" class="form-control mb-2" onchange="calcSemana()">
-                <input type="text" id="sem" class="form-control mb-3 bg-light" readonly placeholder="Semana">
-                <button onclick="guardarPedido()" class="btn btn-primary w-100">Enviar a Google</button>
+                
+                <label class="small fw-bold">Semana</label>
+                <input type="text" id="sem" class="form-control mb-3 bg-light" readonly>
+                
+                <button onclick="guardarPedido()" class="btn btn-primary w-100 fw-bold">Guardar Pedido</button>
             </div>
         </div>
 
         <div class="col-md-4">
-            <h5>2. Lista de Pedidos</h5>
-            <div id="lista" class="scroll"></div>
+            <h5 class="text-secondary">2. Estado de Pedidos</h5>
+            <div id="lista" class="scroll shadow-sm"></div>
         </div>
 
         <div class="col-md-4">
-            <div class="card p-3">
-                <h5>3. Completar</h5>
-                <input type="text" id="idSel" class="form-control mb-2 bg-light" readonly placeholder="Selecciona de la lista">
-                <input type="text" id="cont" class="form-control mb-2" placeholder="Contenedor">
-                <input type="text" id="book" class="form-control mb-2" placeholder="Booking">
+            <div class="card p-3 shadow-sm border-success">
+                <h5 class="text-success border-bottom pb-2">3. Ingresar Contenedores</h5>
+                <label class="small fw-bold">ID Seleccionado</label>
+                <input type="text" id="idSel" class="form-control mb-2 bg-light font-monospace" readonly placeholder="Toca un pedido amarillo">
+                
+                <input type="text" id="cont" class="form-control mb-2" placeholder="Número de Contenedor">
+                <input type="text" id="book" class="form-control mb-2" placeholder="Número de Booking">
+                
+                <label class="small fw-bold">Transportista</label>
                 <select id="trans" class="form-select mb-3">
                     <option>TRANS 1</option>
                     <option>TRANS 2</option>
+                    <option>TRANS 3</option>
                 </select>
-                <button onclick="guardarDetalle()" class="btn btn-success w-100">Finalizar</button>
+                <button id="btnFinalizar" onclick="guardarDetalle()" class="btn btn-success w-100 fw-bold">Registrar Contenedor</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfVcXPvPw5qZoEQZVBo4FmFnuL2kdxpRftZ_tlmjXqn3tzd070VM-cqiPeYnZDQ6CikA/exec";
     let pedidos = [];
 
     function calcSemana() {
         const d = new Date(document.getElementById('fecha').value);
+        if (isNaN(d)) return;
         d.setHours(0,0,0,0);
         d.setDate(d.getDate() + 4 - (d.getDay() || 7));
         const sem = Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + 1) / 7);
@@ -62,56 +75,72 @@
 
     function render() {
         const l = document.getElementById('lista');
-        l.innerHTML = "";
+        l.innerHTML = pedidos.length === 0 ? "<p class='text-center text-muted'>Sin registros</p>" : "";
+        
         pedidos.forEach(p => {
             const d = document.createElement('div');
-            d.className = p.done ? 'p-completo' : 'p-nuevo';
-            d.innerHTML = `<b>ID: ${p.id}</b><br>Cant: ${p.cantidad} | Sem: ${p.semana}`;
-            d.onclick = () => { if(!p.done) document.getElementById('idSel').value = p.id; };
+            const isDone = p.registrados >= p.cantidad;
+            d.className = isDone ? 'p-completo' : 'p-nuevo';
+            
+            d.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <b>ID: ${p.id}</b>
+                    <span class="badge-info">${p.registrados} / ${p.cantidad}</span>
+                </div>
+                <small>Fecha: ${p.fechaFormateada} | Sem: ${p.semana}</small>
+                ${isDone ? '<br><b class="text-success small">✓ COMPLETADO</b>' : ''}
+            `;
+
+            d.onclick = () => { 
+                if(!isDone) {
+                    document.getElementById('idSel').value = p.id;
+                } else {
+                    alert("Este pedido ya está completo. No se pueden agregar más contenedores.");
+                }
+            };
             l.appendChild(d);
         });
     }
 
- async function guardarPedido() {
-    const p = {
-        action: "nuevoPedido",
-        id: "P-" + Math.floor(Math.random()*9000+1000),
-        cantidad: document.getElementById('cant').value,
-        fecha: document.getElementById('fecha').value,
-        semana: document.getElementById('sem').value
-    };
-    
-    pedidos.unshift({...p, done: false});
-    render();
+    async function guardarPedido() {
+        const fechaRaw = document.getElementById('fecha').value;
+        if (!fechaRaw || !document.getElementById('cant').value) return alert("Completa todos los campos");
 
-    try {
-        // Usamos mode: 'no-cors' para evitar el bloqueo del navegador
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
+        // FORMATO DE FECHA: De 2026-01-21 a 21/01/2026
+        const partes = fechaRaw.split("-");
+        const fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+        const p = {
+            action: "nuevoPedido",
+            id: "P-" + Math.floor(Math.random()*9000+1000),
+            cantidad: parseInt(document.getElementById('cant').value),
+            fecha: fechaFormateada, 
+            semana: document.getElementById('sem').value
+        };
+        
+        // Agregamos contador interno de registros
+        pedidos.unshift({...p, registrados: 0, fechaFormateada: fechaFormateada});
+        render();
+
+        await fetch(SCRIPT_URL, { 
+            method: 'POST', 
             mode: 'no-cors', 
-            cache: 'no-cache',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(p)
+            body: JSON.stringify(p) 
         });
         
-        // Con no-cors no podemos leer la respuesta, pero los datos LLEGAN
-        alert("Pedido enviado. Revisa tu hoja de Google en 5 segundos.");
+        alert("Pedido " + p.id + " creado correctamente.");
         document.getElementById('cant').value = "";
         document.getElementById('fecha').value = "";
         document.getElementById('sem').value = "";
-        
-    } catch (e) {
-        console.error("Error crítico:", e);
-        alert("Hubo un fallo en la conexión.");
     }
-}
+
     async function guardarDetalle() {
         const id = document.getElementById('idSel').value;
         const p = pedidos.find(x => x.id === id);
-        if(!p) return;
         
+        if(!p) return alert("Selecciona un pedido de la lista");
+        if(p.registrados >= p.cantidad) return;
+
         const d = {
             action: "completarDetalle",
             idPedido: id,
@@ -119,10 +148,23 @@
             booking: document.getElementById('book').value,
             transportista: document.getElementById('trans').value
         };
-        p.done = true;
+
+        // Aumentar contador y refrescar lista
+        p.registrados++;
         render();
-        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(d) });
-        alert("Detalles guardados con éxito");
+
+        await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify(d) 
+        });
+
+        alert("Contenedor registrado (" + p.registrados + "/" + p.cantidad + ")");
+        
+        // Limpiar campos de detalle
+        document.getElementById('cont').value = "";
+        document.getElementById('book').value = "";
+        if(p.registrados >= p.cantidad) document.getElementById('idSel').value = "";
     }
 </script>
 </body>
