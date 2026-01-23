@@ -3,36 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Logístico - Excel OneDrive</title>
+    <title>Sistema Logístico de Contenedores</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --primary-color: #0078d4; --secondary-color: #2b88d8; }
-        body { background-color: #f3f2f1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar { background-color: var(--primary-color); color: white; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card { border: none; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .btn-primary { background-color: var(--primary-color); border: none; }
-        .btn-primary:hover { background-color: var(--secondary-color); }
-        .section-title { border-left: 5px solid var(--primary-color); padding-left: 10px; margin-bottom: 20px; color: #333; }
+        body { background-color: #f4f7f9; font-family: 'Segoe UI', sans-serif; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .nav-header { background: #0078d4; color: white; padding: 1rem 0; margin-bottom: 2rem; }
+        .btn-primary { background-color: #0078d4; border: none; }
+        .btn-success { background-color: #107c10; border: none; }
     </style>
 </head>
 <body>
 
-<nav class="navbar p-3">
-    <div class="container">
-        <span class="navbar-brand mb-0 h1 text-white">Gestión de Contenedores</span>
-    </div>
-</nav>
+<div class="nav-header text-center">
+    <h1>Logística OneDrive - Excel</h1>
+</div>
 
 <div class="container">
     <div class="row">
-        <div class="col-lg-5 mb-4">
+        <div class="col-lg-5">
             <div class="card p-4">
-                <h3 class="section-title">1. Registrar Pedido</h3>
+                <h4 class="text-primary mb-3">1. Nuevo Pedido</h4>
                 <form id="formPedido">
-                    <input type="hidden" name="accion" value="nuevoPedido">
                     <div class="mb-3">
                         <label class="form-label">Cantidad de Contenedores</label>
-                        <input type="number" id="cant" class="form-control" required min="1">
+                        <input type="number" id="cantidad" class="form-control" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Fecha de Pedido</label>
@@ -40,26 +35,25 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Número de Semana</label>
-                        <input type="text" id="semana" class="form-control bg-light" readonly placeholder="Se calcula automáticamente">
+                        <input type="text" id="semana" class="form-control bg-light" readonly>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Guardar en OneDrive</button>
+                    <button type="submit" class="btn btn-primary w-100">Registrar Pedido</button>
                 </form>
             </div>
         </div>
 
         <div class="col-lg-7">
             <div class="card p-4">
-                <h3 class="section-title">2. Asignar Contenedor a Pedido</h3>
+                <h4 class="text-success mb-3">2. Asignación de Contenedor</h4>
                 <form id="formDetalle">
-                    <input type="hidden" name="accion" value="completarDetalle">
                     <div class="mb-3">
-                        <label class="form-label">ID de Pedido Registrado</label>
-                        <input type="text" id="idPedido" class="form-control" placeholder="Ingrese el ID del pedido (Ej: P-001)" required>
+                        <label class="form-label">ID / Referencia del Pedido</label>
+                        <input type="text" id="idPedido" class="form-control" placeholder="Ej: P-101" required>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Número de Contenedor</label>
-                            <input type="text" id="contenedor" class="form-control" required>
+                            <label class="form-label">Contenedor</label>
+                            <input type="text" id="contenedor" class="form-control" placeholder="ABCD1234567" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Booking</label>
@@ -70,18 +64,18 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Transportista</label>
                             <select id="transportista" class="form-select" required>
-                                <option value="" selected disabled>Seleccione...</option>
+                                <option value="" disabled selected>Seleccione...</option>
                                 <option value="TRANS 1">TRANS 1</option>
                                 <option value="TRANS 2">TRANS 2</option>
                                 <option value="TRANS 3">TRANS 3</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Fecha de Ingreso</label>
+                            <label class="form-label">Fecha Ingreso</label>
                             <input type="date" id="fechaIngreso" class="form-control" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-success w-100">Completar Registro</button>
+                    <button type="submit" class="btn btn-success w-100">Completar Datos</button>
                 </form>
             </div>
         </div>
@@ -89,66 +83,68 @@
 </div>
 
 <script>
-    // URL DE POWER AUTOMATE (Reemplazar con la tuya)
-    const FLOW_URL = "https://hook.us2.make.com/op27uo3fppm8nribhv75e74n5s0d41ib";
+    // IMPORTANTE: Pega aquí la URL que te dio Make en el módulo de Webhooks
+    const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/op27uo3fppm8nribhv75e74n5s0d41ib";
 
-    // Cálculo automático de la semana
+    // Lógica para calcular la semana automáticamente al poner la fecha
     document.getElementById('fecha').addEventListener('change', function() {
-        const d = new Date(this.value);
-        if(!isNaN(d)) {
-            const numSemana = getWeek(d);
-            document.getElementById('semana').value = numSemana;
+        const date = new Date(this.value);
+        if(!isNaN(date)) {
+            const weekNumber = getISOWeek(date);
+            document.getElementById('semana').value = "Semana " + weekNumber;
         }
     });
 
-    function getWeek(date) {
+    function getISOWeek(date) {
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-        const dayNum = d.getUTCDay() || 7;
-        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
         const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
         return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
     }
 
-    // Función para enviar datos
-    async function enviarDatos(payload) {
+    // Función para enviar los datos a Make
+    async function enviarAMake(datos) {
         try {
-            const response = await fetch(FLOW_URL, {
+            const response = await fetch(MAKE_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(datos)
             });
             if(response.ok) {
-                alert("¡Datos guardados con éxito!");
+                alert("¡Datos enviados correctamente a Excel!");
             } else {
-                alert("Error al guardar. Revisa la conexión.");
+                alert("Error en el servidor de Make.");
             }
         } catch (error) {
             console.error(error);
-            alert("Error crítico de conexión.");
+            alert("No se pudo conectar con Make.");
         }
     }
 
-    // Eventos de los formularios
+    // Capturar Formulario de Pedidos
     document.getElementById('formPedido').onsubmit = (e) => {
         e.preventDefault();
-        enviarDatos({
-            accion: "nuevoPedido",
-            cantidad: document.getElementById('cant').value,
+        enviarAMake({
+            action: "nuevoPedido",
+            cantidad: document.getElementById('cantidad').value,
             fecha: document.getElementById('fecha').value,
             semana: document.getElementById('semana').value
         });
+        e.target.reset();
     };
 
+    // Capturar Formulario de Detalles
     document.getElementById('formDetalle').onsubmit = (e) => {
         e.preventDefault();
-        enviarDatos({
-            accion: "completarDetalle",
+        enviarAMake({
+            action: "completarDetalle",
             idPedido: document.getElementById('idPedido').value,
             contenedor: document.getElementById('contenedor').value,
             booking: document.getElementById('booking').value,
             transportista: document.getElementById('transportista').value,
             fechaIngreso: document.getElementById('fechaIngreso').value
         });
+        e.target.reset();
     };
 </script>
 </body>
