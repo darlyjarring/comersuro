@@ -5,68 +5,46 @@
     <title>comersuro - Control de Pedidos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
-        .card { border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: none; }
-        .header { background: #0078d4; color: white; padding: 20px; margin-bottom: 30px; }
-        .badge-pedido { background: #e1f5fe; color: #01579b; font-weight: bold; }
+        .pedido-nuevo { background-color: #fff3cd !important; border-left: 5px solid #ffc107; } /* Amarillo */
+        .pedido-completo { background-color: #ffffff !important; border-left: 5px solid #198754; } /* Normal/Verde */
+        .card-pedido { cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        .card-pedido:hover { transform: scale(1.02); }
+        .header { background: #0078d4; color: white; padding: 15px; }
     </style>
 </head>
 <body>
 
-<div class="header text-center">
-    <h1>comersuro - Gestión de Contenedores</h1>
-</div>
+<div class="header text-center"><h1>Gestión Logística comersuro</h1></div>
 
-<div class="container">
+<div class="container mt-4">
     <div class="row">
-        <div class="col-md-5">
-            <div class="card p-4">
-                <h4 class="text-primary border-bottom pb-2">1. Registrar Pedido</h4>
+        <div class="col-md-4">
+            <div class="card p-3 shadow-sm">
+                <h5>1. Registrar Nuevo Pedido</h5>
                 <form id="formPedido">
-                    <div class="mb-3">
-                        <label>ID Pedido (Ej: P-001)</label>
-                        <input type="text" id="idGenerado" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Cantidad</label>
-                        <input type="number" id="cantidad" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Fecha</label>
-                        <input type="date" id="fecha" class="form-control" required onchange="calcularSemana()">
-                    </div>
-                    <div class="mb-3">
-                        <label>Semana</label>
-                        <input type="text" id="semana" class="form-control bg-light" readonly>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Guardar Pedido</button>
+                    <input type="number" id="cantidad" class="form-control mb-2" placeholder="Cantidad" required>
+                    <input type="date" id="fecha" class="form-control mb-2" required>
+                    <button type="submit" class="btn btn-primary w-100">Crear Pedido</button>
                 </form>
             </div>
         </div>
 
-        <div class="col-md-7">
-            <div class="card p-4">
-                <h4 class="text-success border-bottom pb-2">2. Asignar Contenedores a Pedido</h4>
+        <div class="col-md-4">
+            <h5>2. Pedidos Existentes</h5>
+            <div id="listaVisual" style="max-height: 500px; overflow-y: auto;">
+                <p class="text-muted text-center">Cargando pedidos...</p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card p-3 shadow-sm">
+                <h5>3. Completar Contenedor</h5>
                 <form id="formDetalle">
-                    <div class="mb-3">
-                        <label class="fw-bold">Seleccionar Pedido de la Lista:</label>
-                        <select id="listaPedidos" class="form-select border-primary" required>
-                            <option value="" disabled selected>Esperando registros...</option>
-                        </select>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3"><label>Contenedor</label><input type="text" id="contenedor" class="form-control" required></div>
-                        <div class="col-6 mb-3"><label>Booking</label><input type="text" id="booking" class="form-control" required></div>
-                    </div>
-                    <div class="mb-3">
-                        <label>Transportista</label>
-                        <select id="transp" class="form-select">
-                            <option>TRANS 1</option>
-                            <option>TRANS 2</option>
-                            <option>TRANS 3</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Vincular Contenedor</button>
+                    <label>ID Seleccionado:</label>
+                    <input type="text" id="idSeleccionado" class="form-control mb-2" readonly>
+                    <input type="text" id="contenedor" class="form-control mb-2" placeholder="Contenedor" required>
+                    <input type="text" id="booking" class="form-control mb-2" placeholder="Booking" required>
+                    <button type="submit" class="btn btn-success w-100">Guardar Detalles</button>
                 </form>
             </div>
         </div>
@@ -74,66 +52,73 @@
 </div>
 
 <script>
-    // PEGA TU URL DE MAKE AQUÍ
-    const WEBHOOK_URL = "TU_URL_DE_MAKE_AQUI";
+    const WEBHOOK_URL = "https://hook.us2.make.com/op27uo3fppm8nribhv75e74n5s0d41ib";
 
-    function calcularSemana() {
-        const fecha = new Date(document.getElementById('fecha').value);
-        const d = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        const sem = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        document.getElementById('semana').value = "Semana " + sem;
+    // Simulación de carga (En Make deberías configurar un GET para traer datos reales)
+    let pedidosLocal = [];
+
+    async function cargarPedidos() {
+        // Aquí llamarías a Make para traer la lista de Excel
+        // Por ahora, manejaremos la lógica visual:
+        renderizarLista();
     }
 
-    async function enviar(datos, tipo) {
-        try {
-            const res = await fetch(WEBHOOK_URL, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(datos)
-            });
-            if(res.ok) {
-                alert("Guardado en Excel con éxito");
-                if(tipo === 'pedido') {
-                    agregarALista(datos.idPedido);
-                }
-            }
-        } catch (e) { alert("Error de conexión"); }
+    function renderizarLista() {
+        const contenedor = document.getElementById('listaVisual');
+        contenedor.innerHTML = "";
+        pedidosLocal.forEach(p => {
+            const div = document.createElement('div');
+            div.className = `card card-pedido p-2 shadow-sm ${p.completado ? 'pedido-completo' : 'pedido-nuevo'}`;
+            div.innerHTML = `<strong>Pedido #${p.id}</strong><br><small>Cant: ${p.cantidad} | ${p.fecha}</small>`;
+            div.onclick = () => seleccionarPedido(p.id);
+            contenedor.appendChild(div);
+        });
     }
 
-    function agregarALista(id) {
-        const select = document.getElementById('listaPedidos');
-        const opt = document.createElement('option');
-        opt.value = id;
-        opt.text = "Pedido: " + id;
-        select.add(opt);
-        select.value = id; // Selecciona automáticamente el último creado
+    function seleccionarPedido(id) {
+        document.getElementById('idSeleccionado').value = id;
     }
 
-    document.getElementById('formPedido').onsubmit = (e) => {
+    document.getElementById('formPedido').onsubmit = async (e) => {
         e.preventDefault();
-        const d = {
+        const nuevo = {
             action: "nuevoPedido",
-            idPedido: document.getElementById('idGenerado').value,
+            id: Date.now().toString().slice(-4), // Genera un ID automático
             cantidad: document.getElementById('cantidad').value,
             fecha: document.getElementById('fecha').value,
-            semana: document.getElementById('semana').value
+            completado: false
         };
-        enviar(d, 'pedido');
+        
+        pedidosLocal.unshift(nuevo);
+        renderizarLista();
+        await fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify(nuevo) });
+        e.target.reset();
     };
 
-    document.getElementById('formDetalle').onsubmit = (e) => {
+    document.getElementById('formDetalle').onsubmit = async (e) => {
         e.preventDefault();
-        const d = {
-            action: "completarDetalle",
-            idPedido: document.getElementById('listaPedidos').value,
-            contenedor: document.getElementById('contenedor').value,
-            booking: document.getElementById('booking').value,
-            transportista: document.getElementById('transp').value
-        };
-        enviar(d, 'detalle');
+        const id = document.getElementById('idSeleccionado').value;
+        const pedido = pedidosLocal.find(p => p.id === id);
+        
+        if (pedido) {
+            pedido.completado = true; // Cambia el color de amarillo a normal
+            renderizarLista();
+            await fetch(WEBHOOK_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({
+                    action: "completarDetalle",
+                    idPedido: id,
+                    contenedor: document.getElementById('contenedor').value,
+                    booking: document.getElementById('booking').value
+                })
+            });
+            alert("Contenedor asignado y color actualizado");
+            e.target.reset();
+            document.getElementById('idSeleccionado').value = "";
+        }
     };
+
+    window.onload = cargarPedidos;
 </script>
 </body>
 </html>
