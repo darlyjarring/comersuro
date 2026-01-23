@@ -5,70 +5,56 @@
     <title>comersuro - Gestión Logística</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; }
-        /* Estilo para pedidos nuevos (Pendientes) */
-        .pedido-nuevo { background-color: #fff3cd !important; border-left: 6px solid #ffc107; color: #856404; }
-        /* Estilo para pedidos completados */
-        .pedido-completo { background-color: #ffffff !important; border-left: 6px solid #198754; color: #155724; }
-        
-        .card-pedido { cursor: pointer; transition: 0.2s; margin-bottom: 12px; border: 1px solid #dee2e6; border-radius: 8px; }
-        .card-pedido:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .header { background: #0078d4; color: white; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .scroll-lista { max-height: 600px; overflow-y: auto; padding-right: 10px; }
+        body { background-color: #f4f7f6; }
+        .pedido-nuevo { background-color: #fff3cd !important; border-left: 8px solid #ffc107; cursor: pointer; }
+        .pedido-completo { background-color: #ffffff !important; border-left: 8px solid #198754; opacity: 0.8; }
+        .card-pedido { margin-bottom: 10px; transition: 0.2s; border: 1px solid #ddd; }
+        .card-pedido:hover { transform: scale(1.01); }
+        .header { background: #004a87; color: white; padding: 15px; margin-bottom: 20px; }
+        .scroll-area { max-height: 500px; overflow-y: auto; background: white; padding: 15px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="header text-center mb-4">
-    <h1>comersuro - Control de Contenedores</h1>
+<div class="header text-center">
+    <h2>Sistema de Control - comersuro</h2>
 </div>
 
 <div class="container">
     <div class="row">
         <div class="col-md-4">
             <div class="card p-3 shadow-sm">
-                <h5 class="text-primary mb-3">1. Registrar Pedido</h5>
+                <h5 class="text-primary">1. Nuevo Pedido</h5>
                 <form id="formPedido">
-                    <label class="small fw-bold">Cantidad de Contenedores</label>
-                    <input type="number" id="cantidad" class="form-control mb-2" placeholder="Ej: 5" required>
-                    
-                    <label class="small fw-bold">Fecha del Pedido</label>
+                    <input type="number" id="cantidad" class="form-control mb-2" placeholder="Cant. Contenedores" required>
                     <input type="date" id="fecha" class="form-control mb-3" required>
-                    
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">Crear Pedido Nuevo</button>
+                    <button type="submit" class="btn btn-primary w-100">Registrar y Generar ID</button>
                 </form>
             </div>
         </div>
 
         <div class="col-md-4">
-            <h5 class="mb-3">2. Pedidos en Proceso</h5>
-            <div id="listaVisual" class="scroll-lista">
-                <p class="text-muted small">No hay pedidos registrados aún.</p>
+            <h5>2. Lista de Pedidos</h5>
+            <div id="listaVisual" class="scroll-area shadow-sm">
+                <p class="text-muted small text-center">No hay pedidos registrados.</p>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card p-3 shadow-sm border-success">
-                <h5 class="text-success mb-3">3. Asignar Detalles</h5>
+            <div class="card p-3 shadow-sm">
+                <h5 class="text-success">3. Asignar Detalle</h5>
                 <form id="formDetalle">
-                    <label class="small fw-bold">ID del Pedido Seleccionado</label>
-                    <input type="text" id="idSeleccionado" class="form-control mb-2 bg-light font-monospace" readonly placeholder="Toca un pedido amarillo">
-                    
-                    <label class="small fw-bold">Contenedor</label>
-                    <input type="text" id="contenedor" class="form-control mb-2" required>
-                    
-                    <label class="small fw-bold">Booking</label>
-                    <input type="text" id="booking" class="form-control mb-2" required>
-                    
-                    <label class="small fw-bold">Transportista</label>
+                    <label class="small">ID Seleccionado:</label>
+                    <input type="text" id="idSeleccionado" class="form-control mb-2 bg-light" readonly>
+                    <input type="text" id="contenedor" class="form-control mb-2" placeholder="N° Contenedor" required>
+                    <input type="text" id="booking" class="form-control mb-2" placeholder="N° Booking" required>
                     <select id="transp" class="form-select mb-3" required>
-                        <option value="" disabled selected>Elegir Transportista...</option>
+                        <option value="" disabled selected>Transportista...</option>
                         <option value="TRANS 1">TRANS 1</option>
                         <option value="TRANS 2">TRANS 2</option>
                         <option value="TRANS 3">TRANS 3</option>
                     </select>
-                    
-                    <button type="submit" class="btn btn-success w-100 fw-bold">Completar e Ir a Excel</button>
+                    <button type="submit" class="btn btn-success w-100">Grabar en Excel</button>
                 </form>
             </div>
         </div>
@@ -76,20 +62,65 @@
 </div>
 
 <script>
-    // URL DE TU WEBHOOK DE MAKE ACTUALIZADA
     const WEBHOOK_URL = "https://hook.us2.make.com/x7w5fnmcunpxjlny69gqhs12elln1cjx";
+    let pedidos = [];
 
-    let pedidosLocal = [];
-
-    // Función para pintar la lista
-    function renderizarLista() {
-        const divLista = document.getElementById('listaVisual');
-        if (pedidosLocal.length === 0) return;
+    function actualizarInterfaz() {
+        const contenedor = document.getElementById('listaVisual');
+        if (pedidos.length === 0) return;
+        contenedor.innerHTML = "";
         
-        divLista.innerHTML = "";
-        pedidosLocal.forEach(p => {
+        pedidos.forEach(p => {
             const card = document.createElement('div');
-            // Si está completado es blanco, si no es amarillo
-            card.className = `card-pedido p-3 ${p.completado ? 'pedido-completo' : 'pedido-nuevo'}`;
-            card.innerHTML = `
-                <div class="d-flex justify-content
+            card.className = `card card-pedido p-3 ${p.completado ? 'pedido-completo' : 'pedido-nuevo'}`;
+            card.innerHTML = `<strong>PEDIDO #${p.id}</strong><br><small>${p.fecha} - ${p.cantidad} Cont.</small>`;
+            
+            card.onclick = () => {
+                if (!p.completado) {
+                    document.getElementById('idSeleccionado').value = p.id;
+                }
+            };
+            contenedor.appendChild(card);
+        });
+    }
+
+    document.getElementById('formPedido').onsubmit = async (e) => {
+        e.preventDefault();
+        const nuevoId = "P-" + Math.floor(Math.random() * 9000 + 1000);
+        const datos = {
+            action: "nuevoPedido",
+            id: nuevoId,
+            cantidad: document.getElementById('cantidad').value,
+            fecha: document.getElementById('fecha').value,
+            completado: false
+        };
+        pedidos.unshift(datos);
+        actualizarInterfaz();
+        await fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify(datos) });
+        e.target.reset();
+    };
+
+    document.getElementById('formDetalle').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('idSeleccionado').value;
+        const pedido = pedidos.find(p => p.id === id);
+        
+        if (pedido) {
+            const envio = {
+                action: "completarDetalle",
+                idPedido: id,
+                contenedor: document.getElementById('contenedor').value,
+                booking: document.getElementById('booking').value,
+                transportista: document.getElementById('transp').value
+            };
+            pedido.completado = true;
+            actualizarInterfaz();
+            await fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify(envio) });
+            alert("¡Grabado en Excel!");
+            e.target.reset();
+            document.getElementById('idSeleccionado').value = "";
+        }
+    };
+</script>
+</body>
+</html>
