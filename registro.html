@@ -1,143 +1,108 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>comersuro - Gestión Logística</title>
+    <title>comersuro Directo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; font-family: sans-serif; }
-        .pedido-nuevo { background-color: #fff3cd !important; border-left: 8px solid #ffc107; cursor: pointer; }
-        .pedido-completo { background-color: #ffffff !important; border-left: 8px solid #198754; opacity: 0.7; }
-        .card-pedido { margin-bottom: 10px; border: 1px solid #ddd; transition: 0.2s; }
-        .card-pedido:hover { transform: scale(1.01); }
-        .header { background: #004a87; color: white; padding: 15px; margin-bottom: 20px; }
-        .scroll-area { max-height: 500px; overflow-y: auto; background: white; padding: 15px; border-radius: 10px; border: 1px solid #ccc; }
+        .p-nuevo { background: #fff3cd; border-left: 8px solid #ffc107; margin-bottom: 8px; cursor: pointer; padding: 10px; border-radius: 5px; }
+        .p-completo { background: #d1e7dd; border-left: 8px solid #198754; margin-bottom: 8px; padding: 10px; border-radius: 5px; opacity: 0.6; }
+        .scroll { max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
     </style>
 </head>
-<body>
+<body class="bg-light">
 
-<div class="header text-center">
-    <h2>Control de Pedidos - comersuro</h2>
-</div>
+<div class="bg-primary text-white text-center p-3 mb-4"><h2>Control Logístico Directo</h2></div>
 
 <div class="container">
     <div class="row">
         <div class="col-md-4">
-            <div class="card p-3 shadow-sm">
-                <h5 class="text-primary border-bottom pb-2">1. Registrar Pedido</h5>
-                <form id="formPedido">
-                    <label class="small">Cantidad</label>
-                    <input type="number" id="cantidad" class="form-control mb-2" required>
-                    
-                    <label class="small">Fecha Pedido</label>
-                    <input type="date" id="fecha" class="form-control mb-2" required onchange="actualizarSemana()">
-                    
-                    <label class="small">Semana Calculada</label>
-                    <input type="text" id="semanaDisplay" class="form-control mb-3 bg-light" readonly>
-                    
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">Guardar en Excel</button>
-                </form>
+            <div class="card p-3">
+                <h5>1. Registrar Pedido</h5>
+                <input type="number" id="cant" class="form-control mb-2" placeholder="Cantidad">
+                <input type="date" id="fecha" class="form-control mb-2" onchange="calcSemana()">
+                <input type="text" id="sem" class="form-control mb-3 bg-light" readonly placeholder="Semana">
+                <button onclick="guardarPedido()" class="btn btn-primary w-100">Enviar a Google</button>
             </div>
         </div>
 
         <div class="col-md-4">
-            <h5 class="text-secondary">2. Selección de Pedido</h5>
-            <div id="listaVisual" class="scroll-area shadow-sm">
-                <p class="text-center text-muted">No hay datos.</p>
-            </div>
+            <h5>2. Lista de Pedidos</h5>
+            <div id="lista" class="scroll"></div>
         </div>
 
         <div class="col-md-4">
-            <div class="card p-3 shadow-sm">
-                <h5 class="text-success border-bottom pb-2">3. Asignar Contenedor</h5>
-                <form id="formDetalle">
-                    <label class="small">ID Pedido:</label>
-                    <input type="text" id="idSeleccionado" class="form-control mb-2 bg-light" readonly>
-                    
-                    <input type="text" id="contenedor" class="form-control mb-2" placeholder="Contenedor" required>
-                    <input type="text" id="booking" class="form-control mb-2" placeholder="Booking" required>
-                    
-                    <select id="transp" class="form-select mb-3" required>
-                        <option value="" disabled selected>Transportista...</option>
-                        <option value="TRANS 1">TRANS 1</option>
-                        <option value="TRANS 2">TRANS 2</option>
-                    </select>
-                    
-                    <button type="submit" class="btn btn-success w-100 fw-bold">Completar Detalle</button>
-                </form>
+            <div class="card p-3">
+                <h5>3. Completar</h5>
+                <input type="text" id="idSel" class="form-control mb-2 bg-light" readonly placeholder="Selecciona de la lista">
+                <input type="text" id="cont" class="form-control mb-2" placeholder="Contenedor">
+                <input type="text" id="book" class="form-control mb-2" placeholder="Booking">
+                <select id="trans" class="form-select mb-3">
+                    <option>TRANS 1</option>
+                    <option>TRANS 2</option>
+                </select>
+                <button onclick="guardarDetalle()" class="btn btn-success w-100">Finalizar</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const WEBHOOK_URL = "https://hook.us2.make.com/x7w5fnmcunpxjlny69gqhs12elln1cjx";
+    // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfVcXPvPw5qZoEQZVBo4FmFnuL2kdxpRftZ_tlmjXqn3tzd070VM-cqiPeYnZDQ6CikA/exec";
     let pedidos = [];
 
-    // Función para calcular la semana ISO
-    function actualizarSemana() {
-        const fechaVal = document.getElementById('fecha').value;
-        if (!fechaVal) return;
-        const d = new Date(fechaVal);
+    function calcSemana() {
+        const d = new Date(document.getElementById('fecha').value);
         d.setHours(0,0,0,0);
         d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-        const yearStart = new Date(d.getFullYear(), 0, 1);
-        const semana = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        document.getElementById('semanaDisplay').value = semana;
+        const sem = Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + 1) / 7);
+        document.getElementById('sem').value = sem;
     }
 
     function render() {
-        const list = document.getElementById('listaVisual');
-        list.innerHTML = pedidos.length ? "" : '<p class="text-center text-muted">No hay datos.</p>';
+        const l = document.getElementById('lista');
+        l.innerHTML = "";
         pedidos.forEach(p => {
-            const div = document.createElement('div');
-            div.className = `card card-pedido p-2 ${p.completado ? 'pedido-completo' : 'pedido-nuevo'}`;
-            div.innerHTML = `<strong>ID: ${p.id}</strong><br><small>Cant: ${p.cantidad} | Sem: ${p.semana}</small>`;
-            div.onclick = () => { if(!p.completado) document.getElementById('idSeleccionado').value = p.id; };
-            list.appendChild(div);
+            const d = document.createElement('div');
+            d.className = p.done ? 'p-completo' : 'p-nuevo';
+            d.innerHTML = `<b>ID: ${p.id}</b><br>Cant: ${p.cantidad} | Sem: ${p.semana}`;
+            d.onclick = () => { if(!p.done) document.getElementById('idSel').value = p.id; };
+            l.appendChild(d);
         });
     }
 
-    // ENVÍO DE PEDIDO
-    document.getElementById('formPedido').onsubmit = async (e) => {
-        e.preventDefault();
-        const idAuto = Math.floor(Math.random() * 9000) + 1000; // Genera ID numérico
-        const datos = {
+    async function guardarPedido() {
+        const p = {
             action: "nuevoPedido",
-            id: idAuto,
-            cantidad: document.getElementById('cantidad').value,
-            fechaPedido: document.getElementById('fecha').value,
-            semana: document.getElementById('semanaDisplay').value
+            id: "P-" + Math.floor(Math.random()*9000+1000),
+            cantidad: document.getElementById('cant').value,
+            fecha: document.getElementById('fecha').value,
+            semana: document.getElementById('sem').value
         };
-
-        pedidos.unshift({...datos, completado: false});
+        pedidos.unshift({...p, done: false});
         render();
+        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(p) });
+        alert("Pedido registrado en Google Sheets");
+    }
 
-        await fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify(datos) });
-        e.target.reset();
-        document.getElementById('semanaDisplay').value = "";
-    };
-
-    // ENVÍO DE DETALLE
-    document.getElementById('formDetalle').onsubmit = async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('idSeleccionado').value;
-        const p = pedidos.find(x => x.id == id);
-        if (p) {
-            const envio = {
-                action: "completarDetalle",
-                idPedido: id,
-                contenedor: document.getElementById('contenedor').value,
-                booking: document.getElementById('booking').value,
-                transportista: document.getElementById('transp').value
-            };
-            p.completado = true;
-            render();
-            await fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify(envio) });
-            e.target.reset();
-            document.getElementById('idSeleccionado').value = "";
-        }
-    };
+    async function guardarDetalle() {
+        const id = document.getElementById('idSel').value;
+        const p = pedidos.find(x => x.id === id);
+        if(!p) return;
+        
+        const d = {
+            action: "completarDetalle",
+            idPedido: id,
+            contenedor: document.getElementById('cont').value,
+            booking: document.getElementById('book').value,
+            transportista: document.getElementById('trans').value
+        };
+        p.done = true;
+        render();
+        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(d) });
+        alert("Detalles guardados con éxito");
+    }
 </script>
 </body>
 </html>
