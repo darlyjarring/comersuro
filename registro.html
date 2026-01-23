@@ -2,49 +2,73 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>comersuro - Control de Pedidos</title>
+    <title>comersuro - Gestión Logística</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .pedido-nuevo { background-color: #fff3cd !important; border-left: 5px solid #ffc107; } /* Amarillo */
-        .pedido-completo { background-color: #ffffff !important; border-left: 5px solid #198754; } /* Normal/Verde */
-        .card-pedido { cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
-        .card-pedido:hover { transform: scale(1.02); }
-        .header { background: #0078d4; color: white; padding: 15px; }
+        body { background-color: #f8f9fa; }
+        /* Estilo para pedidos nuevos (Pendientes) */
+        .pedido-nuevo { background-color: #fff3cd !important; border-left: 6px solid #ffc107; color: #856404; }
+        /* Estilo para pedidos completados */
+        .pedido-completo { background-color: #ffffff !important; border-left: 6px solid #198754; color: #155724; }
+        
+        .card-pedido { cursor: pointer; transition: 0.2s; margin-bottom: 12px; border: 1px solid #dee2e6; border-radius: 8px; }
+        .card-pedido:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .header { background: #0078d4; color: white; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .scroll-lista { max-height: 600px; overflow-y: auto; padding-right: 10px; }
     </style>
 </head>
 <body>
 
-<div class="header text-center"><h1>Gestión Logística comersuro</h1></div>
+<div class="header text-center mb-4">
+    <h1>comersuro - Control de Contenedores</h1>
+</div>
 
-<div class="container mt-4">
+<div class="container">
     <div class="row">
         <div class="col-md-4">
             <div class="card p-3 shadow-sm">
-                <h5>1. Registrar Nuevo Pedido</h5>
+                <h5 class="text-primary mb-3">1. Registrar Pedido</h5>
                 <form id="formPedido">
-                    <input type="number" id="cantidad" class="form-control mb-2" placeholder="Cantidad" required>
-                    <input type="date" id="fecha" class="form-control mb-2" required>
-                    <button type="submit" class="btn btn-primary w-100">Crear Pedido</button>
+                    <label class="small fw-bold">Cantidad de Contenedores</label>
+                    <input type="number" id="cantidad" class="form-control mb-2" placeholder="Ej: 5" required>
+                    
+                    <label class="small fw-bold">Fecha del Pedido</label>
+                    <input type="date" id="fecha" class="form-control mb-3" required>
+                    
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">Crear Pedido Nuevo</button>
                 </form>
             </div>
         </div>
 
         <div class="col-md-4">
-            <h5>2. Pedidos Existentes</h5>
-            <div id="listaVisual" style="max-height: 500px; overflow-y: auto;">
-                <p class="text-muted text-center">Cargando pedidos...</p>
+            <h5 class="mb-3">2. Pedidos en Proceso</h5>
+            <div id="listaVisual" class="scroll-lista">
+                <p class="text-muted small">No hay pedidos registrados aún.</p>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card p-3 shadow-sm">
-                <h5>3. Completar Contenedor</h5>
+            <div class="card p-3 shadow-sm border-success">
+                <h5 class="text-success mb-3">3. Asignar Detalles</h5>
                 <form id="formDetalle">
-                    <label>ID Seleccionado:</label>
-                    <input type="text" id="idSeleccionado" class="form-control mb-2" readonly>
-                    <input type="text" id="contenedor" class="form-control mb-2" placeholder="Contenedor" required>
-                    <input type="text" id="booking" class="form-control mb-2" placeholder="Booking" required>
-                    <button type="submit" class="btn btn-success w-100">Guardar Detalles</button>
+                    <label class="small fw-bold">ID del Pedido Seleccionado</label>
+                    <input type="text" id="idSeleccionado" class="form-control mb-2 bg-light font-monospace" readonly placeholder="Toca un pedido amarillo">
+                    
+                    <label class="small fw-bold">Contenedor</label>
+                    <input type="text" id="contenedor" class="form-control mb-2" required>
+                    
+                    <label class="small fw-bold">Booking</label>
+                    <input type="text" id="booking" class="form-control mb-2" required>
+                    
+                    <label class="small fw-bold">Transportista</label>
+                    <select id="transp" class="form-select mb-3" required>
+                        <option value="" disabled selected>Elegir Transportista...</option>
+                        <option value="TRANS 1">TRANS 1</option>
+                        <option value="TRANS 2">TRANS 2</option>
+                        <option value="TRANS 3">TRANS 3</option>
+                    </select>
+                    
+                    <button type="submit" class="btn btn-success w-100 fw-bold">Completar e Ir a Excel</button>
                 </form>
             </div>
         </div>
@@ -52,73 +76,20 @@
 </div>
 
 <script>
+    // URL DE TU WEBHOOK DE MAKE ACTUALIZADA
     const WEBHOOK_URL = "https://hook.us2.make.com/x7w5fnmcunpxjlny69gqhs12elln1cjx";
 
-    // Simulación de carga (En Make deberías configurar un GET para traer datos reales)
     let pedidosLocal = [];
 
-    async function cargarPedidos() {
-        // Aquí llamarías a Make para traer la lista de Excel
-        // Por ahora, manejaremos la lógica visual:
-        renderizarLista();
-    }
-
+    // Función para pintar la lista
     function renderizarLista() {
-        const contenedor = document.getElementById('listaVisual');
-        contenedor.innerHTML = "";
+        const divLista = document.getElementById('listaVisual');
+        if (pedidosLocal.length === 0) return;
+        
+        divLista.innerHTML = "";
         pedidosLocal.forEach(p => {
-            const div = document.createElement('div');
-            div.className = `card card-pedido p-2 shadow-sm ${p.completado ? 'pedido-completo' : 'pedido-nuevo'}`;
-            div.innerHTML = `<strong>Pedido #${p.id}</strong><br><small>Cant: ${p.cantidad} | ${p.fecha}</small>`;
-            div.onclick = () => seleccionarPedido(p.id);
-            contenedor.appendChild(div);
-        });
-    }
-
-    function seleccionarPedido(id) {
-        document.getElementById('idSeleccionado').value = id;
-    }
-
-    document.getElementById('formPedido').onsubmit = async (e) => {
-        e.preventDefault();
-        const nuevo = {
-            action: "nuevoPedido",
-            id: Date.now().toString().slice(-4), // Genera un ID automático
-            cantidad: document.getElementById('cantidad').value,
-            fecha: document.getElementById('fecha').value,
-            completado: false
-        };
-        
-        pedidosLocal.unshift(nuevo);
-        renderizarLista();
-        await fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify(nuevo) });
-        e.target.reset();
-    };
-
-    document.getElementById('formDetalle').onsubmit = async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('idSeleccionado').value;
-        const pedido = pedidosLocal.find(p => p.id === id);
-        
-        if (pedido) {
-            pedido.completado = true; // Cambia el color de amarillo a normal
-            renderizarLista();
-            await fetch(WEBHOOK_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({
-                    action: "completarDetalle",
-                    idPedido: id,
-                    contenedor: document.getElementById('contenedor').value,
-                    booking: document.getElementById('booking').value
-                })
-            });
-            alert("Contenedor asignado y color actualizado");
-            e.target.reset();
-            document.getElementById('idSeleccionado').value = "";
-        }
-    };
-
-    window.onload = cargarPedidos;
-</script>
-</body>
-</html>
+            const card = document.createElement('div');
+            // Si está completado es blanco, si no es amarillo
+            card.className = `card-pedido p-3 ${p.completado ? 'pedido-completo' : 'pedido-nuevo'}`;
+            card.innerHTML = `
+                <div class="d-flex justify-content
