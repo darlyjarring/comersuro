@@ -2,80 +2,71 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Logístico de Contenedores</title>
+    <title>comersuro - Control de Pedidos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f9; font-family: 'Segoe UI', sans-serif; }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-        .nav-header { background: #0078d4; color: white; padding: 1rem 0; margin-bottom: 2rem; }
-        .btn-primary { background-color: #0078d4; border: none; }
-        .btn-success { background-color: #107c10; border: none; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .card { border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: none; }
+        .header { background: #0078d4; color: white; padding: 20px; margin-bottom: 30px; }
+        .badge-pedido { background: #e1f5fe; color: #01579b; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="nav-header text-center">
-    <h1>comersuro - Gestión Logística</h1>
+<div class="header text-center">
+    <h1>comersuro - Gestión de Contenedores</h1>
 </div>
 
 <div class="container">
     <div class="row">
-        <div class="col-lg-5">
+        <div class="col-md-5">
             <div class="card p-4">
-                <h4 class="text-primary mb-3">1. Nuevo Pedido</h4>
+                <h4 class="text-primary border-bottom pb-2">1. Registrar Pedido</h4>
                 <form id="formPedido">
                     <div class="mb-3">
-                        <label class="form-label">Cantidad de Contenedores</label>
+                        <label>ID Pedido (Ej: P-001)</label>
+                        <input type="text" id="idGenerado" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Cantidad</label>
                         <input type="number" id="cantidad" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Fecha de Pedido</label>
-                        <input type="date" id="fecha" class="form-control" required>
+                        <label>Fecha</label>
+                        <input type="date" id="fecha" class="form-control" required onchange="calcularSemana()">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Número de Semana</label>
+                        <label>Semana</label>
                         <input type="text" id="semana" class="form-control bg-light" readonly>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Registrar Pedido</button>
+                    <button type="submit" class="btn btn-primary w-100">Guardar Pedido</button>
                 </form>
             </div>
         </div>
 
-        <div class="col-lg-7">
+        <div class="col-md-7">
             <div class="card p-4">
-                <h4 class="text-success mb-3">2. Asignación de Contenedor</h4>
+                <h4 class="text-success border-bottom pb-2">2. Asignar Contenedores a Pedido</h4>
                 <form id="formDetalle">
                     <div class="mb-3">
-                        <label class="form-label">Referencia del Pedido (ID)</label>
-                        <input type="text" id="idPedido" class="form-control" placeholder="Ej: P-101" required>
+                        <label class="fw-bold">Seleccionar Pedido de la Lista:</label>
+                        <select id="listaPedidos" class="form-select border-primary" required>
+                            <option value="" disabled selected>Esperando registros...</option>
+                        </select>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Número de Contenedor</label>
-                            <input type="text" id="contenedor" class="form-control" placeholder="ABCD1234567" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Booking</label>
-                            <input type="text" id="booking" class="form-control" required>
-                        </div>
+                        <div class="col-6 mb-3"><label>Contenedor</label><input type="text" id="contenedor" class="form-control" required></div>
+                        <div class="col-6 mb-3"><label>Booking</label><input type="text" id="booking" class="form-control" required></div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Transportista</label>
-                            <select id="transportista" class="form-select" required>
-                                <option value="" disabled selected>Seleccione...</option>
-                                <option value="TRANS 1">TRANS 1</option>
-                                <option value="TRANS 2">TRANS 2</option>
-                                <option value="TRANS 3">TRANS 3</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Fecha de Ingreso</label>
-                            <input type="date" id="fechaIngreso" class="form-control" required>
-                        </div>
+                    <div class="mb-3">
+                        <label>Transportista</label>
+                        <select id="transp" class="form-select">
+                            <option>TRANS 1</option>
+                            <option>TRANS 2</option>
+                            <option>TRANS 3</option>
+                        </select>
                     </div>
-                    <button type="submit" class="btn btn-success w-100">Completar Datos</button>
+                    <button type="submit" class="btn btn-success w-100">Vincular Contenedor</button>
                 </form>
             </div>
         </div>
@@ -83,69 +74,65 @@
 </div>
 
 <script>
-    // Tu enlace de Webhook de Make
-    const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/op27uo3fppm8nribhv75e74n5s0d41ib";
+    // PEGA TU URL DE MAKE AQUÍ
+    const WEBHOOK_URL = "TU_URL_DE_MAKE_AQUI";
 
-    // Lógica para calcular la semana automáticamente al poner la fecha
-    document.getElementById('fecha').addEventListener('change', function() {
-        const date = new Date(this.value);
-        if(!isNaN(date)) {
-            const weekNumber = getISOWeek(date);
-            document.getElementById('semana').value = weekNumber;
-        }
-    });
-
-    function getISOWeek(date) {
-        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    function calcularSemana() {
+        const fecha = new Date(document.getElementById('fecha').value);
+        const d = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()));
         d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
         const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        const sem = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        document.getElementById('semana').value = "Semana " + sem;
     }
 
-    // Función para enviar los datos a Make
-    async function enviarAMake(datos) {
+    async function enviar(datos, tipo) {
         try {
-            const response = await fetch(MAKE_WEBHOOK_URL, {
+            const res = await fetch(WEBHOOK_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(datos)
             });
-            if(response.ok) {
-                alert("¡Datos guardados con éxito en Excel!");
-            } else {
-                alert("Hubo un problema al enviar los datos.");
+            if(res.ok) {
+                alert("Guardado en Excel con éxito");
+                if(tipo === 'pedido') {
+                    agregarALista(datos.idPedido);
+                }
             }
-        } catch (error) {
-            console.error(error);
-            alert("No se pudo conectar con el sistema.");
-        }
+        } catch (e) { alert("Error de conexión"); }
     }
 
-    // Formulario de Pedidos
+    function agregarALista(id) {
+        const select = document.getElementById('listaPedidos');
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.text = "Pedido: " + id;
+        select.add(opt);
+        select.value = id; // Selecciona automáticamente el último creado
+    }
+
     document.getElementById('formPedido').onsubmit = (e) => {
         e.preventDefault();
-        enviarAMake({
-            action: "nuevoPedido", // Este valor es el que usa el filtro en Make
+        const d = {
+            action: "nuevoPedido",
+            idPedido: document.getElementById('idGenerado').value,
             cantidad: document.getElementById('cantidad').value,
             fecha: document.getElementById('fecha').value,
             semana: document.getElementById('semana').value
-        });
-        e.target.reset();
-        document.getElementById('semana').value = "";
+        };
+        enviar(d, 'pedido');
     };
 
-    // Formulario de Detalles de Contenedor
     document.getElementById('formDetalle').onsubmit = (e) => {
         e.preventDefault();
-        enviarAMake({
-            action: "completarDetalle", // Este valor activa la segunda ruta en Make
-            idPedido: document.getElementById('idPedido').value,
+        const d = {
+            action: "completarDetalle",
+            idPedido: document.getElementById('listaPedidos').value,
             contenedor: document.getElementById('contenedor').value,
             booking: document.getElementById('booking').value,
-            transportista: document.getElementById('transportista').value,
-            fechaIngreso: document.getElementById('fechaIngreso').value
-        });
-        e.target.reset();
+            transportista: document.getElementById('transp').value
+        };
+        enviar(d, 'detalle');
     };
 </script>
 </body>
