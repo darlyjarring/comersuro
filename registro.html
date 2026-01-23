@@ -135,37 +135,43 @@
     }
 
     async function guardarDetalle() {
-        const id = document.getElementById('idSel').value;
-        const p = pedidos.find(x => x.id === id);
-        
-        if(!p) return alert("Selecciona un pedido de la lista");
-        if(p.registrados >= p.cantidad) return;
+    const id = document.getElementById('idSel').value;
+    const p = pedidos.find(x => x.id === id);
+    
+    if(!p) return alert("Por favor, selecciona un pedido de la lista primero.");
+    if(p.registrados >= p.cantidad) return alert("Este pedido ya alcanzó el límite.");
 
-        const d = {
-            action: "completarDetalle",
-            idPedido: id,
-            contenedor: document.getElementById('cont').value,
-            booking: document.getElementById('book').value,
-            transportista: document.getElementById('trans').value
-        };
+    const d = {
+        action: "completarDetalle",
+        idPedido: id,
+        contenedor: document.getElementById('cont').value,
+        booking: document.getElementById('book').value,
+        transportista: document.getElementById('trans').value
+        // La fecha no la enviamos desde aquí, la pone el Script automáticamente
+    };
 
-        // Aumentar contador y refrescar lista
-        p.registrados++;
-        render();
+    // Actualizamos contador local
+    p.registrados++;
+    render();
 
+    try {
         await fetch(SCRIPT_URL, { 
             method: 'POST', 
             mode: 'no-cors', 
             body: JSON.stringify(d) 
         });
 
-        alert("Contenedor registrado (" + p.registrados + "/" + p.cantidad + ")");
+        alert("Contenedor registrado con éxito en Ecuador: " + p.registrados + "/" + p.cantidad);
         
-        // Limpiar campos de detalle
+        // Limpiar campos
         document.getElementById('cont').value = "";
         document.getElementById('book').value = "";
         if(p.registrados >= p.cantidad) document.getElementById('idSel').value = "";
+        
+    } catch (e) {
+        alert("Error al guardar detalles.");
     }
+}
 </script>
 </body>
 </html>
