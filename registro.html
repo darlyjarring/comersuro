@@ -72,20 +72,41 @@
         });
     }
 
-    async function guardarPedido() {
-        const p = {
-            action: "nuevoPedido",
-            id: "P-" + Math.floor(Math.random()*9000+1000),
-            cantidad: document.getElementById('cant').value,
-            fecha: document.getElementById('fecha').value,
-            semana: document.getElementById('sem').value
-        };
-        pedidos.unshift({...p, done: false});
-        render();
-        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(p) });
-        alert("Pedido registrado en Google Sheets");
-    }
+ async function guardarPedido() {
+    const p = {
+        action: "nuevoPedido",
+        id: "P-" + Math.floor(Math.random()*9000+1000),
+        cantidad: document.getElementById('cant').value,
+        fecha: document.getElementById('fecha').value,
+        semana: document.getElementById('sem').value
+    };
+    
+    pedidos.unshift({...p, done: false});
+    render();
 
+    try {
+        // Usamos mode: 'no-cors' para evitar el bloqueo del navegador
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', 
+            cache: 'no-cache',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(p)
+        });
+        
+        // Con no-cors no podemos leer la respuesta, pero los datos LLEGAN
+        alert("Pedido enviado. Revisa tu hoja de Google en 5 segundos.");
+        document.getElementById('cant').value = "";
+        document.getElementById('fecha').value = "";
+        document.getElementById('sem').value = "";
+        
+    } catch (e) {
+        console.error("Error crítico:", e);
+        alert("Hubo un fallo en la conexión.");
+    }
+}
     async function guardarDetalle() {
         const id = document.getElementById('idSel').value;
         const p = pedidos.find(x => x.id === id);
