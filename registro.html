@@ -16,7 +16,7 @@
 <body>
 
 <div class="nav-header text-center">
-    <h1>Logística OneDrive - Excel</h1>
+    <h1>comersuro - Gestión Logística</h1>
 </div>
 
 <div class="container">
@@ -47,12 +47,12 @@
                 <h4 class="text-success mb-3">2. Asignación de Contenedor</h4>
                 <form id="formDetalle">
                     <div class="mb-3">
-                        <label class="form-label">ID / Referencia del Pedido</label>
+                        <label class="form-label">Referencia del Pedido (ID)</label>
                         <input type="text" id="idPedido" class="form-control" placeholder="Ej: P-101" required>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Contenedor</label>
+                            <label class="form-label">Número de Contenedor</label>
                             <input type="text" id="contenedor" class="form-control" placeholder="ABCD1234567" required>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -71,7 +71,7 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Fecha Ingreso</label>
+                            <label class="form-label">Fecha de Ingreso</label>
                             <input type="date" id="fechaIngreso" class="form-control" required>
                         </div>
                     </div>
@@ -83,7 +83,7 @@
 </div>
 
 <script>
-    // IMPORTANTE: Pega aquí la URL que te dio Make en el módulo de Webhooks
+    // Tu enlace de Webhook de Make
     const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/op27uo3fppm8nribhv75e74n5s0d41ib";
 
     // Lógica para calcular la semana automáticamente al poner la fecha
@@ -91,7 +91,7 @@
         const date = new Date(this.value);
         if(!isNaN(date)) {
             const weekNumber = getISOWeek(date);
-            document.getElementById('semana').value = "Semana " + weekNumber;
+            document.getElementById('semana').value = weekNumber;
         }
     });
 
@@ -111,33 +111,34 @@
                 body: JSON.stringify(datos)
             });
             if(response.ok) {
-                alert("¡Datos enviados correctamente a Excel!");
+                alert("¡Datos guardados con éxito en Excel!");
             } else {
-                alert("Error en el servidor de Make.");
+                alert("Hubo un problema al enviar los datos.");
             }
         } catch (error) {
             console.error(error);
-            alert("No se pudo conectar con Make.");
+            alert("No se pudo conectar con el sistema.");
         }
     }
 
-    // Capturar Formulario de Pedidos
+    // Formulario de Pedidos
     document.getElementById('formPedido').onsubmit = (e) => {
         e.preventDefault();
         enviarAMake({
-            action: "nuevoPedido",
+            action: "nuevoPedido", // Este valor es el que usa el filtro en Make
             cantidad: document.getElementById('cantidad').value,
             fecha: document.getElementById('fecha').value,
             semana: document.getElementById('semana').value
         });
         e.target.reset();
+        document.getElementById('semana').value = "";
     };
 
-    // Capturar Formulario de Detalles
+    // Formulario de Detalles de Contenedor
     document.getElementById('formDetalle').onsubmit = (e) => {
         e.preventDefault();
         enviarAMake({
-            action: "completarDetalle",
+            action: "completarDetalle", // Este valor activa la segunda ruta en Make
             idPedido: document.getElementById('idPedido').value,
             contenedor: document.getElementById('contenedor').value,
             booking: document.getElementById('booking').value,
