@@ -75,17 +75,25 @@
     let pedidos = [];
 
     // --- CARGAR AL INICIO ---
-    async function cargarDatosIniciales() {
-        const l = document.getElementById('lista');
-        l.innerHTML = "<p class='text-center py-5'>Sincronizando con Google Sheets...</p>";
-        try {
-            const response = await fetch(SCRIPT_URL);
-            pedidos = await response.json();
-            render();
-        } catch (e) {
-            l.innerHTML = "<p class='text-danger text-center py-5'>Error de conexión.</p>";
-        }
+   async function cargarDatosIniciales() {
+    const l = document.getElementById('lista');
+    l.innerHTML = "<p class='text-center py-5'>Sincronizando con Google Sheets...</p>";
+    
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'GET',
+            redirect: 'follow' // <--- ESTO ES VITAL para evitar el error 302
+        });
+        
+        if (!response.ok) throw new Error('Error en la respuesta');
+        
+        pedidos = await response.json();
+        render();
+    } catch (e) {
+        console.error("Error CORS o Red:", e);
+        l.innerHTML = "<p class='text-danger text-center py-5'>Error al cargar: Verifica que el script esté publicado como 'Cualquiera'.</p>";
     }
+}
 
     window.onload = cargarDatosIniciales;
 
