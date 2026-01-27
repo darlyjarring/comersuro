@@ -75,23 +75,28 @@
     let pedidos = [];
 
     // --- CARGAR AL INICIO ---
-   async function cargarDatosIniciales() {
+ async function cargarDatosIniciales() {
     const l = document.getElementById('lista');
-    l.innerHTML = "<p class='text-center py-5'>Sincronizando con Google Sheets...</p>";
+    l.innerHTML = "<p class='text-center py-5'>Cargando datos...</p>";
     
     try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'GET',
-            redirect: 'follow' // <--- ESTO ES VITAL para evitar el error 302
-        });
+        // Intentamos la petición normal
+        const response = await fetch(SCRIPT_URL);
         
-        if (!response.ok) throw new Error('Error en la respuesta');
+        // Google nos devuelve texto plano para evitar el bloqueo
+        const texto = await response.text(); 
         
-        pedidos = await response.json();
+        // Convertimos ese texto manualmente a JSON
+        pedidos = JSON.parse(texto);
         render();
+        
     } catch (e) {
-        console.error("Error CORS o Red:", e);
-        l.innerHTML = "<p class='text-danger text-center py-5'>Error al cargar: Verifica que el script esté publicado como 'Cualquiera'.</p>";
+        console.error("Error detectado:", e);
+        // Si falla, es probable que la URL sea vieja o no esté como "Cualquiera"
+        l.innerHTML = `<div class='alert alert-danger'>
+            <b>Error de Conexión</b><br>
+            Asegúrate de haber publicado el Script como 'Cualquiera' y usar la URL de la última implementación.
+        </div>`;
     }
 }
 
