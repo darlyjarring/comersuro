@@ -172,29 +172,54 @@
     }
 
     async function guardarDetalle() {
-        const id = document.getElementById('idSel').value;
-        const p = pedidos.find(x => x.id === id);
-        
-        if(!p) return alert("Toca un pedido amarillo de la lista primero.");
+    const id = document.getElementById('idSel').value;
+    const p = pedidos.find(x => x.id === id);
+    const btn = document.querySelector("button[onclick='guardarDetalle()']"); // Capturamos el botón
+    
+    if(!p) return alert("Selecciona un pedido");
+    
+    // VALIDACIÓN EXTRA: Si ya llegó al límite, no hacer nada
+    if(p.registrados >= p.cantidad) {
+        alert("¡Límite alcanzado! No se puede grabar más.");
+        return;
+    }
 
-        const d = {
-            action: "completarDetalle",
-            idPedido: id,
-            contenedor: document.getElementById('cont').value,
-            booking: document.getElementById('book').value,
-            transportista: document.getElementById('trans').value
-        };
+    // BLOQUEO DEL BOTÓN para evitar el doble envío
+    btn.disabled = true; 
+    btn.innerText = "Grabando...";
+
+    const d = {
+        action: "completarDetalle",
+        idPedido: id,
+        contenedor: document.getElementById('cont').value,
+        booking: document.getElementById('book').value,
+        transportista: document.getElementById('trans').value
+    };
+
+    try {
+        await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify(d) 
+        });
 
         p.registrados++;
         render();
+        alert("Registrado correctamente");
 
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) });
-
-        alert("Contenedor registrado correctamente en Ecuador.");
+        // Limpiar campos
         document.getElementById('cont').value = "";
         document.getElementById('book').value = "";
-        if(p.registrados >= p.cantidad) document.getElementById('idSel').value = "";
+        document.getElementById('idSel').value = "";
+
+    } catch (e) {
+        alert("Error al guardar");
+    } finally {
+        // REACTIVAR el botón al terminar
+        btn.disabled = false;
+        btn.innerText = "Finalizar Registro";
     }
+}
 </script>
 </body>
 </html>
