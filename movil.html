@@ -6,108 +6,120 @@
     <title>comersuro - Mobile</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; overflow-x: hidden; }
+        body { background-color: #f4f7f6; overflow-x: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
         .header-app { 
             background: #004a87; color: white; padding: 12px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;
         }
 
-        /* Estilos de Pasos */
-        .step-content { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        .step-content { display: none; padding: 15px; animation: slideIn 0.3s ease-out; }
         .step-content.active { display: block; }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* Tarjetas de Pedidos */
-        .p-nuevo { background: #fff3cd; border-left: 6px solid #ffc107; margin-bottom: 10px; padding: 12px; border-radius: 8px; }
-        .p-completo { background: #d1e7dd; border-left: 6px solid #198754; margin-bottom: 10px; padding: 12px; border-radius: 8px; opacity: 0.8; }
+        .p-nuevo { background: #fff3cd; border-left: 6px solid #ffc107; margin-bottom: 10px; padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .p-completo { background: #d1e7dd; border-left: 6px solid #198754; margin-bottom: 10px; padding: 15px; border-radius: 12px; opacity: 0.7; }
         
-        .scroll { max-height: calc(100vh - 220px); overflow-y: auto; background: #fff; border-radius: 10px; padding: 10px; }
+        .scroll { max-height: calc(100vh - 230px); overflow-y: auto; background: #fff; border-radius: 12px; padding: 12px; }
 
-        /* Barra de Navegación Inferior */
         .nav-bottom {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; display: flex; justify-content: space-around;
-            padding: 10px; border-top: 1px solid #ddd; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            padding: 10px 0; border-top: 1px solid #eee; box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
         }
-        .nav-item { border: none; background: none; color: #666; font-size: 0.8rem; flex: 1; transition: 0.3s; }
+        .nav-item { border: none; background: none; color: #888; font-size: 0.75rem; flex: 1; text-align: center; }
         .nav-item.active { color: #004a87; font-weight: bold; }
-        .nav-item i { display: block; font-size: 1.2rem; }
+        .nav-item span { display: block; font-size: 1.4rem; margin-bottom: 2px; }
 
-        .badge-progreso { background: #0078d4; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; }
-        .form-control, .form-select, .btn { height: 48px; border-radius: 10px; }
+        .badge-progreso { background: #0078d4; color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.85em; }
+        .form-control, .form-select, .btn { height: 50px; border-radius: 12px; font-size: 16px; }
+        
+        .btn-shortcut { background: #e7f1ff; color: #004a87; border: 1px dashed #004a87; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="header-app text-center">
-    <h2 class="h5 mb-0">Gestión comersuro</h2>
+    <h2 class="h5 mb-0">Gestión Logística comersuro</h2>
 </div>
 
 <div class="container">
     
     <div id="step1" class="step-content active">
-        <h5 class="text-primary mb-3">1. Generar Pedido</h5>
+        <h5 class="text-primary mb-3 fw-bold">1. Generar Nuevo Pedido</h5>
         <div class="card p-3 shadow-sm border-0">
-            <label class="small fw-bold">Cantidad</label>
+            <label class="small fw-bold text-muted">Contenedores Totales</label>
             <input type="number" id="cant" class="form-control mb-3" placeholder="Ej: 5">
-            <label class="small fw-bold">Fecha</label>
+            <label class="small fw-bold text-muted">Fecha del Pedido</label>
             <input type="date" id="fecha" class="form-control mb-3" onchange="calcSemana()">
-            <label class="small fw-bold">Semana</label>
+            <label class="small fw-bold text-muted">Semana</label>
             <input type="text" id="sem" class="form-control mb-4 bg-light" readonly>
-            <button onclick="guardarPedido()" class="btn btn-primary w-100 fw-bold">Guardar Pedido</button>
+            
+            <button onclick="guardarPedido()" class="btn btn-primary w-100 fw-bold shadow-sm">Guardar y Continuar</button>
+            
+            <button onclick="goToStep(2)" class="btn btn-shortcut w-100 fw-bold">
+                Ir a Pedidos Pendientes →
+            </button>
         </div>
     </div>
 
     <div id="step2" class="step-content">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="text-secondary mb-0">2. Lista de Pedidos</h5>
-            <button onclick="cargarDatosIniciales()" class="btn btn-sm btn-light border">🔄</button>
+            <h5 class="text-secondary mb-0 fw-bold">2. Selección de Pedido</h5>
+            <button onclick="cargarDatosIniciales()" class="btn btn-sm btn-outline-primary rounded-circle">🔄</button>
         </div>
-        <div id="lista" class="scroll border shadow-sm">
-            <p class="text-center text-muted py-5">Cargando...</p>
+        <div id="lista" class="scroll border-0 shadow-sm">
+            <p class="text-center text-muted py-5">Sincronizando...</p>
         </div>
     </div>
 
     <div id="step3" class="step-content">
-        <h5 class="text-success mb-3">3. Carga Contenedor</h5>
+        <h5 class="text-success mb-3 fw-bold">3. Registrar Contenedor</h5>
         <div class="card p-3 shadow-sm border-0 border-top border-success border-4">
-            <label class="small fw-bold">ID Seleccionado:</label>
-            <input type="text" id="idSel" class="form-control mb-3 bg-light text-center fw-bold" readonly placeholder="Selecciona en la lista">
-            <input type="text" id="cont" class="form-control mb-2" placeholder="Contenedor">
+            <label class="small fw-bold text-muted">ID Seleccionado:</label>
+            <input type="text" id="idSel" class="form-control mb-3 bg-light text-center fw-bold" readonly placeholder="Ninguno seleccionado">
+            
+            <input type="text" id="cont" class="form-control mb-2" placeholder="Nº Contenedor">
             <input type="text" id="book" class="form-control mb-3" placeholder="Booking">
+            
+            <label class="small fw-bold text-muted">Transportista</label>
             <select id="trans" class="form-select mb-4">
                 <option value="TRANS 1">TRANS 1</option>
                 <option value="TRANS 2">TRANS 2</option>
                 <option value="TRANS 3">TRANS 3</option>
             </select>
-            <button onclick="guardarDetalle()" class="btn btn-success w-100 fw-bold">Finalizar</button>
+            <button onclick="guardarDetalle()" class="btn btn-success w-100 fw-bold shadow-sm">Finalizar Registro</button>
         </div>
     </div>
 
 </div>
 
-<div style="height: 80px;"></div> <nav class="nav-bottom">
-    <button class="nav-item active" onclick="showStep(1, this)">📝<br>Nuevo</button>
-    <button class="nav-item" onclick="showStep(2, this)">📋<br>Lista</button>
-    <button class="nav-item" onclick="showStep(3, this)">📦<br>Carga</button>
+<div style="height: 85px;"></div>
+
+<nav class="nav-bottom">
+    <button id="nav1" class="nav-item active" onclick="showStep(1)"><span>📝</span>Nuevo</button>
+    <button id="nav2" class="nav-item" onclick="showStep(2)"><span>📋</span>Lista</button>
+    <button id="nav3" class="nav-item" onclick="showStep(3)"><span>📦</span>Carga</button>
 </nav>
 
 <script>
-    /* Lógica de Navegación Móvil */
-    function showStep(step, btn) {
-        // Ocultar todos los pasos
+    // Función auxiliar para navegar desde botones internos
+    function goToStep(step) {
+        showStep(step);
+    }
+
+    function showStep(step) {
         document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
-        // Mostrar el seleccionado
         document.getElementById('step' + step).classList.add('active');
-        // Actualizar botones nav
+        
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        document.getElementById('nav' + step).classList.add('active');
+        
         window.scrollTo(0,0);
     }
 
-    /* MANTENEMOS TU LÓGICA EXACTA */
+    /* LÓGICA ORIGINAL */
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec";
     let pedidos = [];
 
@@ -120,7 +132,7 @@
             pedidos = JSON.parse(texto);
             render();
         } catch (e) {
-            l.innerHTML = `<div class='alert alert-danger'>Error de Red</div>`;
+            l.innerHTML = `<div class='alert alert-danger'>Error de conexión</div>`;
         }
     }
 
@@ -138,25 +150,25 @@
 
     function render() {
         const l = document.getElementById('lista');
-        l.innerHTML = pedidos.length === 0 ? "<p class='text-center text-muted py-5'>Vacío</p>" : "";
+        l.innerHTML = pedidos.length === 0 ? "<p class='text-center text-muted py-5'>No hay pedidos activos</p>" : "";
+        
         pedidos.forEach(p => {
             const d = document.createElement('div');
             const isDone = p.registrados >= p.cantidad;
             d.className = isDone ? 'p-completo' : 'p-nuevo';
             d.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-bold">${p.id}</span>
+                    <span class="fw-bold text-dark">${p.id}</span>
                     <span class="badge-progreso">${p.registrados} / ${p.cantidad}</span>
                 </div>
-                <div class="small text-muted">Fecha: ${p.fechaFormateada} | Sem: ${p.semana}</div>
+                <div class="small text-muted mt-1">Fecha: ${p.fechaFormateada} | Sem: ${p.semana}</div>
             `;
             d.onclick = () => { 
                 if(!isDone) {
                     document.getElementById('idSel').value = p.id;
-                    // Al seleccionar, saltamos automáticamente al paso 3 para ahorrar clics
-                    showStep(3, document.querySelectorAll('.nav-item')[2]);
+                    showStep(3);
                 } else {
-                    alert("Cerrado.");
+                    alert("⚠️ Pedido completado.");
                 }
             };
             l.appendChild(d);
@@ -179,29 +191,37 @@
         render();
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) });
         alert("¡Pedido creado!");
-        showStep(2, document.querySelectorAll('.nav-item')[1]); // Ir a la lista
+        showStep(2);
     }
 
     async function guardarDetalle() {
         const id = document.getElementById('idSel').value;
         const p = pedidos.find(x => x.id === id);
         const btn = document.querySelector("button[onclick='guardarDetalle()']");
-        if(!p) return alert("Selecciona un pedido");
-        btn.disabled = true; btn.innerText = "Grabando...";
+        if(!p) return alert("Selecciona un pedido primero");
+        
+        btn.disabled = true; 
+        btn.innerText = "Enviando...";
+        
         const d = {
-            action: "completarDetalle", idPedido: id,
+            action: "completarDetalle", 
+            idPedido: id,
             contenedor: document.getElementById('cont').value,
             booking: document.getElementById('book').value,
             transportista: document.getElementById('trans').value
         };
+        
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) });
             p.registrados++;
             render();
-            alert("¡Éxito!");
-            showStep(2, document.querySelectorAll('.nav-item')[1]); // Volver a la lista
+            alert("Contenedor registrado con éxito");
+            document.getElementById('cont').value = "";
+            document.getElementById('book').value = "";
+            document.getElementById('idSel').value = "";
+            showStep(2);
         } catch (e) { alert("Error"); } 
-        finally { btn.disabled = false; btn.innerText = "Finalizar"; }
+        finally { btn.disabled = false; btn.innerText = "Finalizar Registro"; }
     }
 </script>
 </body>
