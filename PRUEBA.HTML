@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama de Proceso y Cuellos de Botella - APEOSAE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .process-box {
+            width: 100%;
+            max-width: 600px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 1rem;
+            margin: 0 auto;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+
+        .connector-line {
+            width: 2px;
+            height: 16px;
+            background-color: #333;
+            margin: 0 auto;
+        }
+
+        .arrow-down {
+            width: 0; 
+            height: 0; 
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid #333;
+            margin: -2px auto 0;
+            margin-bottom: 2px;
+        }
+
+        .bg-storage { background-color: #A5D6A7; border-left: 6px solid #2E7D32; }
+        .bg-operation { background-color: #90CAF9; border-left: 6px solid #1565C0; }
+        .bg-inspection { background-color: #FFF59D; border-left: 6px solid #FBC02D; }
+        .bg-transport { background-color: #FFCC80; border-left: 6px solid #EF6C00; }
+        .bg-delay { background-color: #EF9A9A; border-left: 6px solid #C62828; }
+
+        .symbol-icon {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 12px;
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        body {
+            background-color: white;
+        }
+
+        .bottleneck-card {
+            border-top: 4px solid #C62828;
+            background-color: #FEF2F2;
+        }
+    </style>
+</head>
+<body class="p-8">
+
+    <div class="max-w-4xl mx-auto text-center mb-12">
+        <h1 class="text-3xl font-bold text-gray-800 uppercase mb-2">Gestión de Operaciones: APEOSAE</h1>
+        <h2 class="text-xl font-semibold text-gray-600">Diagrama de Proceso e Identificación de Restricciones</h2>
+    </div>
+
+    <!-- SECCIÓN: CUELLOS DE BOTELLA -->
+    <div class="max-w-4xl mx-auto mb-16">
+        <h3 class="text-2xl font-bold text-red-700 mb-6 flex items-center">
+            <span class="mr-2">⚠️</span> d) Identificación de Cuellos de Botella
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Cuello de Botella 1 -->
+            <div class="bottleneck-card p-6 rounded-xl shadow-md">
+                <div class="flex items-center mb-4">
+                    <span class="bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3">14</span>
+                    <h4 class="text-lg font-bold text-gray-800">Escogido Manual</h4>
+                </div>
+                <p class="text-gray-700 text-sm leading-relaxed mb-4">
+                    Es el punto más crítico del sistema. Al depender exclusivamente de la capacidad visual y manual humana, el flujo se restringe severamente.
+                </p>
+                <div class="bg-white p-3 rounded border border-red-200">
+                    <p class="text-red-700 font-bold text-xs uppercase mb-1">Impacto en Capacidad:</p>
+                    <p class="text-gray-800 font-semibold text-lg">2 quintales / hora / persona</p>
+                    <p class="text-gray-500 text-xs mt-1 italic">Nota: Si el volumen de cosecha es alto, el café se represa en esta etapa.</p>
+                </div>
+            </div>
+
+            <!-- Cuello de Botella 2 -->
+            <div class="bottleneck-card p-6 rounded-xl shadow-md" style="border-top-color: #F97316; background-color: #FFF7ED;">
+                <div class="flex items-center mb-4">
+                    <span class="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3">3</span>
+                    <h4 class="text-lg font-bold text-gray-800">Control de Humedad</h4>
+                </div>
+                <p class="text-gray-700 text-sm leading-relaxed mb-4">
+                    Punto de control de calidad de entrada. Los niveles de humedad fuera de rango bloquean el flujo directo a la línea de trilla.
+                </p>
+                <div class="bg-white p-3 rounded border border-orange-200">
+                    <p class="text-orange-700 font-bold text-xs uppercase mb-1">Criterio de Rechazo:</p>
+                    <p class="text-gray-800 font-semibold text-lg">> 12% de humedad</p>
+                    <p class="text-gray-500 text-xs mt-1 italic">Nota: Obliga a desviar el café a secadoras mecánicas, elevando costos y tiempos.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN: DIAGRAMA DE FLUJO -->
+    <div class="max-w-4xl mx-auto text-center mb-8">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Flujo de Proceso (20 Pasos)</h3>
+        
+        <!-- Leyenda -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8 text-sm">
+            <div class="flex items-center"><span class="w-4 h-4 bg-[#A5D6A7] border border-gray-300 mr-2"></span>▽ Almacenamiento</div>
+            <div class="flex items-center"><span class="w-4 h-4 bg-[#90CAF9] border border-gray-300 mr-2"></span>○ Operación</div>
+            <div class="flex items-center"><span class="w-4 h-4 bg-[#FFF59D] border border-gray-300 mr-2"></span>□ Inspección</div>
+            <div class="flex items-center"><span class="w-4 h-4 bg-[#FFCC80] border border-gray-300 mr-2"></span>⇨ Transporte</div>
+            <div class="flex items-center"><span class="w-4 h-4 bg-[#EF9A9A] border border-gray-300 mr-2"></span>D Demora</div>
+        </div>
+    </div>
+
+    <div class="flex flex-col items-center pb-20">
+        <!-- Pasos del 1 al 20 -->
+        <div class="process-box bg-storage"><span class="symbol-icon text-green-800">▽</span><span class="font-medium">1. Almacenamiento:</span> &nbsp;Recepción de café pergamino en bodega de paso.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-operation"><span class="symbol-icon text-blue-900">○</span><span class="font-medium">2. Operación:</span> &nbsp;Pesaje inicial del lote por socio.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-inspection border-2 border-orange-500"><span class="symbol-icon text-yellow-800">□</span><span class="font-medium">3. Inspección:</span> &nbsp;Análisis de humedad (Cuello de Botella si >12%).</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-transport"><span class="symbol-icon text-orange-900">⇨</span><span class="font-medium">4. Transporte:</span> &nbsp;Traslado manual hacia la zona de pre-limpieza.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-operation"><span class="symbol-icon text-blue-900">○</span><span class="font-medium">5. Operación:</span> &nbsp;Alimentación de la tolva de recepción.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-operation"><span class="symbol-icon text-blue-900">○</span><span class="font-medium">6. Operación:</span> &nbsp;Pre-limpieza (retiro de objetos grandes).</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-inspection"><span class="symbol-icon text-yellow-800">□</span><span class="font-medium">7. Inspección:</span> &nbsp;Control de eficiencia de la zaranda.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-transport"><span class="symbol-icon text-orange-900">⇨</span><span class="font-medium">8. Transporte:</span> &nbsp;Elevación mediante elevador de cangilones.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-operation"><span class="symbol-icon text-blue-900">○</span><span class="font-medium">9. Operación:</span> &nbsp;Trilla o Descascarado (separación del pergamino).</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-delay"><span class="symbol-icon text-red-900">D</span><span class="font-medium">10. Demora:</span> &nbsp;Acumulación en silo intermedio de ventilación.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-operation"><span class="symbol-icon text-blue-900">○</span><span class="font-medium">11. Operación:</span> &nbsp;Clasificación por tamaño (separación por mallas).</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-operation"><span class="symbol-icon text-blue-900">○</span><span class="font-medium">12. Operación:</span> &nbsp;Clasificación por densidad (Mesa densimétrica).</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-transport"><span class="symbol-icon text-orange-900">⇨</span><span class="font-medium">13. Transporte:</span> &nbsp;Flujo hacia la zona de escogido manual.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-inspection border-2 border-red-500 shadow-lg scale-105 z-10">
+            <span class="symbol-icon text-yellow-800">□</span>
+            <span class="font-bold">14. Inspección CRÍTICA:</span> &nbsp;Escogido manual en banda (Cuello de Botella).
+        </div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-operation"><span class="symbol-icon text-blue-900">○</span><span class="font-medium">15. Operación:</span> &nbsp;Pesaje de bultos finales (estándar de 69 kg).</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-operation"><span class="symbol-icon text-blue-900">○</span><span class="font-medium">16. Operación:</span> &nbsp;Ensacado en fundas GrainPro para conservación.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-inspection"><span class="symbol-icon text-yellow-800">□</span><span class="font-medium">17. Inspección:</span> &nbsp;Etiquetado de trazabilidad y certificaciones.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-transport"><span class="symbol-icon text-orange-900">⇨</span><span class="font-medium">18. Transporte:</span> &nbsp;Traslado a bodega con montacargas.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-storage"><span class="symbol-icon text-green-800">▽</span><span class="font-medium">19. Almacenamiento:</span> &nbsp;Reposo bajo condiciones controladas.</div>
+        <div class="connector-line"></div><div class="arrow-down"></div>
+
+        <div class="process-box bg-inspection"><span class="symbol-icon text-yellow-800">□</span><span class="font-medium">20. Inspección:</span> &nbsp;Auditoría final pre-embarque (USDA/EU).</div>
+    </div>
+
+</body>
+</html>
