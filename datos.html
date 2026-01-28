@@ -156,7 +156,7 @@ function render() {
                         <b>${d.vapor}</b> | BK: ${d.booking}<br>
                         <span class="text-muted">Marca: ${d.marca} | Línea: ${d.linea}</span><br>
                         <b>Cont:</b> ${d.contenedor} | <b>Trans:</b> ${d.transp}<br>
-                        <small>P: ${d.fecha} | R: ${d.fechaReg}</small>
+                        <small>P: ${d.fechaPed} | R: ${d.fechaReg}</small>
                     </div>
                     <div class="text-center">
                         <div class="estado-pill ${d.blasti.toLowerCase()}" 
@@ -307,7 +307,7 @@ function exportarExcel() {
         "Booking": d.booking,
         "Marca": d.marca,
         "Línea Naviera": d.linea,
-        "Fecha Pedido": d.fecha,
+        "Fecha Pedido": d.fechaPed,
         "Contenedor": d.contenedor,
         "Fecha Registro": d.fechaReg,
         "Transporte": d.transp,
