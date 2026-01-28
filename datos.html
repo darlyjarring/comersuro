@@ -111,24 +111,38 @@
         } catch(e) { console.log(e); }
     }
 
-    function render() {
-        const l = document.getElementById('lista');
-        l.innerHTML = pedidos.length ? "" : "<p class='text-center mt-5 text-muted'>No hay pedidos</p>";
-        pedidos.forEach(p => {
-            const d = document.createElement('div');
-            d.className = 'card-custom p-item';
-            d.innerHTML = `
-                <div class="d-flex justify-content-between">
-                    <span class="vapor-title">${p.vapor}</span>
-                    <span class="badge bg-primary rounded-pill">${p.registrados}/${p.cantidad}</span>
-                </div>
-                <div class="text-muted small mt-1">BK: ${p.booking} | ${p.linea}</div>
-            `;
-            d.onclick = () => { document.getElementById('idSel').value = p.id; showStep(3); };
-            l.appendChild(d);
-        });
-    }
+   // RENDER DE LISTA CON BLOQUEO VISUAL
+function render() {
+    const l = document.getElementById('lista');
+    l.innerHTML = "";
+    pedidos.forEach(p => {
+        const d = document.createElement('div');
+        // Si está completado, usamos una clase gris y quitamos el puntero
+        d.className = `card-custom ${p.completado ? 'bg-light opacity-75 border-success' : 'p-item'}`;
+        d.style.cursor = p.completado ? 'not-allowed' : 'pointer';
+        
+        d.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <span class="vapor-title ${p.completado ? 'text-muted' : ''}">${p.vapor}</span>
+                <span class="badge ${p.completado ? 'bg-success' : 'bg-primary'} rounded-pill">
+                    ${p.registrados} / ${p.cantidad}
+                </span>
+            </div>
+            <div class="text-muted small mt-1">BK: ${p.booking} | ${p.linea}</div>
+            ${p.completado ? '<div class="text-success fw-bold small mt-1">✓ PEDIDO COMPLETADO</div>' : ''}
+        `;
 
+        d.onclick = () => { 
+            if(p.completado) {
+                alert("Este pedido ya alcanzó el límite de contenedores (" + p.cantidad + ")");
+            } else {
+                document.getElementById('idSel').value = p.id; 
+                showStep(3); 
+            }
+        };
+        l.appendChild(d);
+    });
+}
     function renderResumen() {
         const r = document.getElementById('listaResumen');
         r.innerHTML = detalles.length ? "" : "Vacío";
@@ -211,7 +225,7 @@ async function guardarPedido() {
     }
 }
 
-// --- GUARDAR CONTENEDOR CON BLOQUEO Y LIMPIEZA ---
+// GUARDAR DETALLE CON VALIDACIÓN DE DOBLE CLIC Y LIMPIEZA
 async function guardarDetalle() {
     const btn = event.target;
     const id = document.getElementById('idSel').value;
@@ -219,37 +233,39 @@ async function guardarDetalle() {
     const trans = document.getElementById('transp').value;
     const fecha = document.getElementById('fecha_carga').value;
     
-    if(!id || !cont || !fecha) return alert("Completa todos los datos de carga");
+    // Buscar el pedido actual para validar cantidad una última vez en el cliente
+    const pedidoActual = pedidos.find(p => p.id === id);
+    if(pedidoActual && pedidoActual.registrados >= pedidoActual.cantidad) {
+        return alert("Error: El pedido ya está lleno.");
+    }
 
-    // BLOQUEO DEL BOTÓN
+    if(!id || !cont || !fecha) return alert("Faltan datos obligatorios.");
+
+    // BLOQUEO INMEDIATO
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Registrando...';
 
     const d = {
-        action: "completarDetalle", 
-        idPedido: id,
+        action: "completarDetalle", idPedido: id,
         contenedor: cont.toUpperCase(), 
         fecha: fecha.split("-").reverse().join("/"),
-        transp: trans, 
-        blasti: "Blasti"
+        transp: trans, blasti: "Blasti"
     };
 
     try {
         await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(d)});
         
-        // LIMPIEZA DE CAMPOS
-        document.getElementById('idSel').value = "";
+        // LIMPIEZA TOTAL
         document.getElementById('cont').value = "";
         document.getElementById('transp').value = "";
         document.getElementById('fecha_carga').value = "";
+        document.getElementById('idSel').value = "";
         
-        alert("✅ Contenedor registrado correctamente");
-        await cargarDatos(); // Refrescar resumen
-        showStep(4);
+        alert("✅ Registro exitoso");
+        await cargarDatos(); // Esto actualiza el contador y bloquea el pedido si llegó al tope
+        showStep(2); // Regresamos a la lista para ver el progreso
     } catch(e) {
-        alert("❌ Error en el registro.");
-    } finally {
-        // DESBLOQUEO DEL BOTÓN
+        alert("❌ Error al guardar.");
         btn.disabled = false;
         btn.innerHTML = "Finalizar Registro";
     }
