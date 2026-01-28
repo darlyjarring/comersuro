@@ -233,39 +233,50 @@ async function guardarDetalle() {
     const trans = document.getElementById('transp').value;
     const fecha = document.getElementById('fecha_carga').value;
     
-    // Buscar el pedido actual para validar cantidad una última vez en el cliente
-    const pedidoActual = pedidos.find(p => p.id === id);
-    if(pedidoActual && pedidoActual.registrados >= pedidoActual.cantidad) {
-        return alert("Error: El pedido ya está lleno.");
-    }
-
     if(!id || !cont || !fecha) return alert("Faltan datos obligatorios.");
 
-    // BLOQUEO INMEDIATO
+    // 1. BLOQUEO VISUAL
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Registrando...';
 
     const d = {
-        action: "completarDetalle", idPedido: id,
+        action: "completarDetalle", 
+        idPedido: id,
         contenedor: cont.toUpperCase(), 
         fecha: fecha.split("-").reverse().join("/"),
-        transp: trans, blasti: "Blasti"
+        transp: trans, 
+        blasti: "Blasti"
     };
 
     try {
-        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(d)});
-        
-        // LIMPIEZA TOTAL
-        document.getElementById('cont').value = "";
-        document.getElementById('transp').value = "";
-        document.getElementById('fecha_carga').value = "";
-        document.getElementById('idSel').value = "";
-        
-        alert("✅ Registro exitoso");
-        await cargarDatos(); // Esto actualiza el contador y bloquea el pedido si llegó al tope
-        showStep(2); // Regresamos a la lista para ver el progreso
+        // Enviamos los datos
+        fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify(d) 
+        });
+
+        // 2. FORZAR REINICIO (No esperamos al servidor para no quedarnos trabados)
+        setTimeout(async () => {
+            // Limpieza de campos
+            document.getElementById('cont').value = "";
+            document.getElementById('transp').value = "";
+            document.getElementById('fecha_carga').value = "";
+            document.getElementById('idSel').value = "";
+            
+            // Liberar botón
+            btn.disabled = false;
+            btn.innerHTML = "Finalizar Registro";
+            
+            alert("✅ Registro enviado correctamente");
+            
+            // Actualizar datos de fondo y volver a la lista
+            await cargarDatos(); 
+            showStep(2); 
+        }, 1000); // 1 segundo de espera es suficiente para el envío
+
     } catch(e) {
-        alert("❌ Error al guardar.");
+        alert("❌ Error al conectar.");
         btn.disabled = false;
         btn.innerHTML = "Finalizar Registro";
     }
