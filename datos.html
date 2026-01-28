@@ -207,38 +207,38 @@
     }
 
     // --- GUARDAR NUEVO PEDIDO ---
-    async function guardarPedido() {
-        const v = document.getElementById('vapor').value;
-        const b = document.getElementById('booking_p').value;
-        const c = document.getElementById('cant').value;
-        const f = document.getElementById('fecha').value;
-        
-        if(!v || !b || !c || !f) return alert("Por favor completa todos los campos obligatorios.");
-        
-        const p = { 
-            action: "nuevoPedido", 
-            id: "P-" + Date.now().toString().slice(-4),
-            vapor: v, 
-            linea: document.getElementById('linea').value, 
-            booking: b, 
-            marca: document.getElementById('marca').value || "-",
-            cantidad: parseInt(c), 
-            fecha: f.split("-").reverse().join("/"),
-            semana: document.getElementById('sem').value 
-        };
+async function guardarPedido() {
+    const v = document.getElementById('vapor').value;
+    const l = document.getElementById('linea').value;
+    const b = document.getElementById('booking_p').value;
+    const m = document.getElementById('marca').value;
+    const c = document.getElementById('cant').value;
+    const f = document.getElementById('fecha').value;
+    const s = document.getElementById('sem').value;
+    
+    if(!v || !b || !c || !f) return alert("Faltan campos obligatorios (Vapor, Booking, Cantidad, Fecha)");
+    
+    const p = { 
+        action: "nuevoPedido", 
+        id: "P-" + Math.floor(Math.random()*9000+1000), // Genera ID aleatorio
+        vapor: v, 
+        linea: l, 
+        booking: b, 
+        marca: m || "-", // Si está vacío pone un guión
+        cantidad: parseInt(c), 
+        fecha: f.split("-").reverse().join("/"),
+        semana: s
+    };
 
-        const btn = event.target;
-        btn.disabled = true; btn.innerText = "Guardando...";
-
-        try {
-            await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(p)});
-            alert("Pedido guardado correctamente.");
-            limpiarForm(1);
-            await cargarDatosIniciales();
-            showStep(2);
-        } catch(e) { alert("Error al guardar."); }
-        finally { btn.disabled = false; btn.innerText = "Crear Pedido"; }
-    }
+    try {
+        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(p)});
+        alert("Pedido guardado con éxito");
+        // Limpiar campos
+        ["vapor", "linea", "booking_p", "marca", "cant", "fecha"].forEach(id => document.getElementById(id).value = "");
+        cargarDatosIniciales();
+        showStep(2);
+    } catch(e) { alert("Error al conectar con el servidor"); }
+}
 
     // --- GUARDAR CONTENEDOR ---
     async function guardarDetalle() {
