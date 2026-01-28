@@ -2,105 +2,72 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
-    <title>COMERSURO LOGÍSTICA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMERSURO PRO</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --azul: #004a87; --verde: #198754; --gris: #f4f7f6; }
-        body { background-color: var(--gris); font-family: -apple-system, sans-serif; margin: 0; overflow-x: hidden; width: 100vw; }
-        .header-app { background: var(--azul); color: white; padding: 12px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .container-mobile { padding: 12px; box-sizing: border-box; padding-bottom: 90px; }
-        .step-content { display: none; }
-        .step-content.active { display: block; animation: fadeIn 0.2s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        :root { --azul: #004a87; }
+        body { background: #f4f7f6; font-size: 14px; padding-bottom: 80px; }
+        .header-app { background: var(--azul); color: white; padding: 10px; text-align: center; font-weight: bold; }
+        .step-content { display: none; padding: 10px; }
+        .step-content.active { display: block; }
+        .card-custom { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .scroll { height: calc(100vh - 220px); overflow-y: auto; }
+        
+        /* Estilos Resumen */
+        .resumen-card { font-size: 0.75rem; border-left: 4px solid var(--azul); margin-bottom: 8px; padding: 8px; background: white; }
+        .badge-estado { cursor: pointer; user-select: none; transition: 0.2s; }
+        .badge-estado:active { transform: scale(0.9); }
 
-        /* Tarjetas de Lista */
-        .card-custom { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #eee; }
-        .p-nuevo { border-left: 6px solid #ffc107; }
-        .p-completo { border-left: 6px solid var(--verde); background: #f0fff4; opacity: 0.8; }
-        .card-buque { font-size: 1.1rem; color: var(--azul); font-weight: bold; line-height: 1.2; text-transform: uppercase; }
-        .card-booking { color: #555; font-size: 0.85rem; background: #eee; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 4px; font-family: monospace; }
-        
-        .scroll { height: calc(100vh - 215px); overflow-y: auto; background: #fff; border-radius: 12px; padding: 10px; border: 1px solid #dee2e6; }
-        
-        /* Formulario */
-        label { font-size: 0.75rem; font-weight: bold; color: #666; margin-bottom: 3px; display: block; text-transform: uppercase; }
-        .form-control, .form-select, .btn { height: 48px; font-size: 16px; border-radius: 10px; margin-bottom: 12px; }
-        
-        /* Navegación Inferior */
-        .nav-bottom { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 75px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { flex: 1; border: none; background: none; color: #888; font-size: 0.75rem; text-align: center; padding: 10px 0; outline: none; }
+        .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 70px; }
+        .nav-item { flex: 1; border: none; background: none; color: #888; font-size: 0.7rem; text-align: center; padding-top: 10px; }
         .nav-item.active { color: var(--azul); font-weight: bold; }
-        .nav-item span { display: block; font-size: 1.4rem; margin-bottom: 2px; }
-
-        .resumen-item { border-bottom: 1px solid #eee; padding: 10px 5px; font-size: 0.85rem; }
-        .fecha-header { background: #e9ecef; padding: 6px 12px; font-weight: bold; font-size: 0.75rem; color: #444; border-radius: 6px; margin-top: 12px; }
+        .nav-item span { display: block; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-<div class="header-app text-center">
-    <h1 class="h6 mb-0">LOGÍSTICA COMERSURO</h1>
+<div class="header-app">LOGÍSTICA COMERSURO</div>
+
+<div id="step1" class="step-content active">
+    <div class="card-custom">
+        <h6>Nuevo Pedido</h6>
+        <input type="text" id="vapor" class="form-control mb-2" placeholder="Nave/Vapor">
+        <input type="text" id="linea" class="form-control mb-2" placeholder="Línea">
+        <input type="text" id="booking_p" class="form-control mb-2" placeholder="Booking">
+        <input type="text" id="marca" class="form-control mb-2" placeholder="Marca">
+        <input type="number" id="cant" class="form-control mb-2" placeholder="Cantidad">
+        <input type="date" id="fecha" class="form-control mb-2" onchange="calcSemana()">
+        <input type="hidden" id="sem">
+        <button onclick="guardarPedido()" class="btn btn-primary w-100">Guardar Pedido</button>
+    </div>
 </div>
 
-<div class="container-mobile">
-    
-    <div id="step1" class="step-content active">
-        <div class="card-custom">
-            <h6 class="fw-bold mb-3 text-primary">Generar Nuevo Pedido</h6>
-            <label>Buque / Vapor</label>
-            <input type="text" id="vapor" class="form-control" placeholder="Nombre del Barco">
-            <label>Línea Naviera</label>
-            <input type="text" id="linea" class="form-control" placeholder="Ej: Maersk / MSC">
-            <label>Booking</label>
-            <input type="text" id="booking_p" class="form-control" placeholder="Número de Booking">
-            <label>Marca (Opcional)</label>
-            <input type="text" id="marca" class="form-control" placeholder="-">
-            <div class="row">
-                <div class="col-6">
-                    <label>Cant. Contenedores</label>
-                    <input type="number" id="cant" class="form-control" placeholder="0">
-                </div>
-                <div class="col-6">
-                    <label>Fecha del Pedido</label>
-                    <input type="date" id="fecha" class="form-control" onchange="calcSemana()">
-                </div>
-            </div>
-            <input type="hidden" id="sem">
-            <button onclick="guardarPedido()" class="btn btn-primary w-100 fw-bold mt-2 shadow-sm">Crear Pedido</button>
-        </div>
+<div id="step2" class="step-content">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold">LISTA</span>
+        <button onclick="cargarDatos()" class="btn btn-sm btn-light border">🔄</button>
     </div>
+    <div id="lista" class="scroll"></div>
+</div>
 
-    <div id="step2" class="step-content">
-        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-            <span class="small fw-bold text-muted">PEDIDOS ACTIVOS</span>
-            <button onclick="cargarDatosIniciales()" class="btn btn-sm btn-outline-secondary py-0">🔄 Actualizar</button>
-        </div>
-        <div id="lista" class="scroll">
-            <p class="text-center py-5 text-muted">Cargando datos...</p>
-        </div>
+<div id="step3" class="step-content">
+    <div class="card-custom border-success border-top border-4">
+        <h6>Registro de Contenedor</h6>
+        <input type="text" id="idSel" class="form-control mb-2 bg-light" readonly>
+        <input type="text" id="cont" class="form-control mb-2" placeholder="Contenedor">
+        <input type="text" id="transp" class="form-control mb-2" placeholder="Transportista">
+        <input type="date" id="fecha_carga" class="form-control mb-3">
+        <button onclick="guardarDetalle()" class="btn btn-success w-100">Finalizar Registro</button>
     </div>
+</div>
 
-    <div id="step3" class="step-content">
-        <div class="card-custom border-top border-success border-4">
-            <h6 class="fw-bold text-success mb-3">Registrar Contenedor</h6>
-            <label>Pedido Seleccionado</label>
-            <input type="text" id="idSel" class="form-control bg-light text-center fw-bold" readonly placeholder="Selecciona de la lista">
-            <label>Número de Contenedor</label>
-            <input type="text" id="cont" class="form-control" placeholder="Ej: HLXU1234567">
-            <label>Fecha de Registro</label>
-            <input type="date" id="fecha_carga" class="form-control">
-            <button onclick="guardarDetalle()" class="btn btn-success w-100 fw-bold mt-3 shadow-sm">Finalizar Carga</button>
-        </div>
+<div id="step4" class="step-content">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-bold">RESUMEN DETALLADO</span>
+        <button onclick="exportarExcel()" class="btn btn-sm btn-success">Excel 📥</button>
     </div>
-
-    <div id="step4" class="step-content">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="small fw-bold text-muted uppercase">Historial de Ingresos</span>
-            <button onclick="exportarExcel()" class="btn btn-sm btn-success fw-bold px-3">Excel 📥</button>
-        </div>
-        <div id="listaResumen" class="scroll"></div>
-    </div>
+    <div id="listaResumen" class="scroll"></div>
 </div>
 
 <nav class="nav-bottom">
@@ -111,206 +78,128 @@
 </nav>
 
 <script>
-    // --- CONFIGURACIÓN ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; // <--- PEGA TU URL DE GOOGLE APPS SCRIPT AQUÍ
-    
-    let pedidos = [];
-    let todosLosDetalles = [];
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; // REEMPLAZAR
+    let pedidos = [], detalles = [];
 
-    // --- CARGA DE DATOS ---
-    async function cargarDatosIniciales() {
-        const l = document.getElementById('lista');
+    async function cargarDatos() {
         try {
-            const response = await fetch(SCRIPT_URL);
-            if (!response.ok) throw new Error("Error en servidor");
-            const data = await response.json();
-            
-            // Protección contra datos vacíos o corruptos
+            const res = await fetch(SCRIPT_URL);
+            const data = await res.json();
             pedidos = data.pedidos || [];
-            todosLosDetalles = data.detalles || [];
-            
+            detalles = data.detalles || [];
             render();
             renderResumen();
-        } catch (e) { 
-            console.error("Error al cargar datos", e);
-            l.innerHTML = "<p class='text-center py-5 text-danger small'>No se pudo conectar. Verifica la URL y tu conexión.</p>";
-        }
+        } catch(e) { console.log(e); }
     }
 
-    // --- RENDERIZADO DE LISTA (PASO 2) ---
     function render() {
         const l = document.getElementById('lista');
-        if (!pedidos || pedidos.length === 0) {
-            l.innerHTML = "<p class='text-center py-5 text-muted'>No hay pedidos pendientes.</p>";
-            return;
-        }
-        
         l.innerHTML = "";
         pedidos.forEach(p => {
-            const isDone = p.registrados >= p.cantidad;
             const d = document.createElement('div');
-            d.className = 'card-custom ' + (isDone ? 'p-completo' : 'p-nuevo');
-            d.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="card-buque">${p.vapor || 'SIN NOMBRE'}</div>
-                        <div class="card-booking">BK: ${p.booking || 'N/A'}</div>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge ${isDone ? 'bg-success' : 'bg-primary'} rounded-pill">${p.registrados} / ${p.cantidad}</span>
-                        <div style="font-size:9px; color:#999; margin-top:5px;">${p.id}</div>
-                    </div>
-                </div>
-                <div class="mt-2 pt-2 border-top d-flex justify-content-between small text-muted" style="font-size:11px">
-                    <span>${p.linea || 'Naviera'} | Marca: ${p.marca || '-'}</span>
-                    <span>${p.fechaFormateada}</span>
-                </div>`;
-            
-            d.onclick = () => { 
-                if(!isDone){ 
-                    document.getElementById('idSel').value = p.id; 
-                    showStep(3); 
-                } else {
-                    alert("Este pedido ya está completo.");
-                }
-            };
+            d.className = 'card-custom';
+            d.innerHTML = `<b>${p.vapor}</b> | BK: ${p.booking}<br><small>${p.registrados}/${p.cantidad} - ${p.linea}</small>`;
+            d.onclick = () => { document.getElementById('idSel').value = p.id; showStep(3); };
             l.appendChild(d);
         });
     }
 
-    // --- RENDERIZADO DE RESUMEN (PASO 4) ---
     function renderResumen() {
-        const div = document.getElementById('listaResumen');
-        if(!todosLosDetalles || todosLosDetalles.length === 0) { 
-            div.innerHTML = "<p class='text-center py-5 text-muted'>Historial vacío.</p>"; 
-            return; 
-        }
-        
-        const grupos = {};
-        todosLosDetalles.slice().reverse().forEach(d => {
-            const f = d.fecha || "S/F";
-            if(!grupos[f]) grupos[f] = [];
-            grupos[f].push(d);
+        const r = document.getElementById('listaResumen');
+        r.innerHTML = "";
+        detalles.slice().reverse().forEach(d => {
+            const div = document.createElement('div');
+            div.className = 'resumen-card shadow-sm';
+            div.innerHTML = `
+                <div class="row">
+                    <div class="col-7">
+                        <b>Nave:</b> ${d.vapor}<br>
+                        <b>BK:</b> ${d.booking} | <b>Marca:</b> ${d.marca}<br>
+                        <b>Cont:</b> ${d.contenedor}<br>
+                        <b>Transp:</b> ${d.transp}
+                    </div>
+                    <div class="col-5 text-end">
+                        <small>Ped: ${d.fechaPed}</small><br>
+                        <small>Reg: ${d.fechaReg}</small><br>
+                        <span class="badge ${d.blasti === 'Blasti' ? 'bg-primary' : 'bg-warning'} mt-2 badge-estado" 
+                              ondblclick="cambiarEstado(${d.fila}, '${d.blasti}')">
+                              ${d.blasti}
+                        </span>
+                        <div style="font-size:9px" class="text-muted">Doble clic para cambiar</div>
+                    </div>
+                </div>
+            `;
+            r.appendChild(div);
         });
-        
-        let html = "";
-        for(let f in grupos){
-            html += `<div class="fecha-header">${f}</div>`;
-            grupos[f].forEach(det => {
-                html += `<div class="resumen-item d-flex justify-content-between">
-                            <span><b>${det.contenedor}</b> <small class="text-muted">(${det.idPedido})</small></span>
-                            <span class="badge bg-light text-dark border">${det.blasti}</span>
-                         </div>`;
-            });
-        }
-        div.innerHTML = html;
     }
 
-    // --- GUARDAR NUEVO PEDIDO ---
-async function guardarPedido() {
-    const v = document.getElementById('vapor').value;
-    const l = document.getElementById('linea').value;
-    const b = document.getElementById('booking_p').value;
-    const m = document.getElementById('marca').value;
-    const c = document.getElementById('cant').value;
-    const f = document.getElementById('fecha').value;
-    const s = document.getElementById('sem').value;
-    
-    if(!v || !b || !c || !f) return alert("Faltan campos obligatorios (Vapor, Booking, Cantidad, Fecha)");
-    
-    const p = { 
-        action: "nuevoPedido", 
-        id: "P-" + Math.floor(Math.random()*9000+1000), // Genera ID aleatorio
-        vapor: v, 
-        linea: l, 
-        booking: b, 
-        marca: m || "-", // Si está vacío pone un guión
-        cantidad: parseInt(c), 
-        fecha: f.split("-").reverse().join("/"),
-        semana: s
-    };
-
-    try {
-        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(p)});
-        alert("Pedido guardado con éxito");
-        // Limpiar campos
-        ["vapor", "linea", "booking_p", "marca", "cant", "fecha"].forEach(id => document.getElementById(id).value = "");
-        cargarDatosIniciales();
-        showStep(2);
-    } catch(e) { alert("Error al conectar con el servidor"); }
-}
-
-    // --- GUARDAR CONTENEDOR ---
-    async function guardarDetalle() {
-        const id = document.getElementById('idSel').value;
-        const cont = document.getElementById('cont').value;
-        const f_c = document.getElementById('fecha_carga').value;
+    async function cambiarEstado(fila, estadoActual) {
+        const nuevo = estadoActual === "Blasti" ? "Campo" : "Blasti";
+        if(!confirm("¿Cambiar estado a " + nuevo + "?")) return;
         
-        if(!id || !cont || !f_c) return alert("Selecciona un pedido e ingresa el contenedor/fecha.");
-        
-        const d = { 
-            action: "completarDetalle", 
-            idPedido: id, 
-            contenedor: cont.toUpperCase(), 
-            fecha: f_c.split("-").reverse().join("/"), 
-            blasti: "Blasti" 
+        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({action:"cambiarEstado", fila: fila, nuevoEstado: nuevo})});
+        alert("Estado actualizado");
+        cargarDatos();
+    }
+
+    async function guardarPedido() {
+        const p = {
+            action: "nuevoPedido",
+            id: "P-" + Date.now().toString().slice(-4),
+            vapor: document.getElementById('vapor').value,
+            linea: document.getElementById('linea').value,
+            booking: document.getElementById('booking_p').value,
+            marca: document.getElementById('marca').value,
+            cantidad: document.getElementById('cant').value,
+            fecha: document.getElementById('fecha').value.split("-").reverse().join("/"),
+            semana: document.getElementById('sem').value
         };
-
-        const btn = event.target;
-        btn.disabled = true; btn.innerText = "Registrando...";
-
-        try {
-            await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(d)});
-            alert("Contenedor registrado.");
-            document.getElementById('cont').value = "";
-            await cargarDatosIniciales();
-            showStep(4);
-        } catch(e) { alert("Error de registro."); }
-        finally { btn.disabled = false; btn.innerText = "Finalizar Carga"; }
+        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(p)});
+        alert("Pedido Creado"); cargarDatos(); showStep(2);
     }
 
-    // --- UTILIDADES ---
+    async function guardarDetalle() {
+        const d = {
+            action: "completarDetalle",
+            idPedido: document.getElementById('idSel').value,
+            contenedor: document.getElementById('cont').value,
+            fecha: document.getElementById('fecha_carga').value.split("-").reverse().join("/"),
+            transp: document.getElementById('transp').value,
+            blasti: "Blasti"
+        };
+        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(d)});
+        alert("Contenedor Registrado"); 
+        document.getElementById('cont').value = "";
+        cargarDatos(); showStep(4);
+    }
+
     function showStep(s, btn) {
         document.querySelectorAll('.step-content').forEach(x => x.classList.remove('active'));
         document.getElementById('step' + s).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        if(btn) btn.classList.add('active'); 
-        else {
-            const navs = document.querySelectorAll('.nav-item');
-            navs[s-1].classList.add('active');
-        }
-        window.scrollTo(0,0);
+        if(btn) btn.classList.add('active');
     }
 
     function calcSemana() {
-        const v = document.getElementById('fecha').value; 
-        if(!v) return;
-        const d = new Date(v); 
-        d.setHours(0,0,0,0); 
-        d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+        const v = document.getElementById('fecha').value; if(!v) return;
+        const d = new Date(v); d.setHours(0,0,0,0); d.setDate(d.getDate() + 4 - (d.getDay() || 7));
         const s = Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + 1) / 7);
         document.getElementById('sem').value = s;
     }
 
-    function limpiarForm(f) {
-        if(f===1) {
-            document.getElementById('vapor').value=""; document.getElementById('booking_p').value="";
-            document.getElementById('cant').value=""; document.getElementById('marca').value="";
-        }
-    }
-
     function exportarExcel() {
-        if(!todosLosDetalles || todosLosDetalles.length === 0) return alert("No hay datos para exportar.");
-        let csv = "\uFEFFID Pedido,Contenedor,Fecha Registro,Estado\n";
-        todosLosDetalles.forEach(d => { csv += `${d.idPedido},${d.contenedor},${d.fecha},${d.blasti}\n`; });
+        let csv = "\uFEFFNave,Booking,Marca,Linea,Fecha Pedido,Contenedor,Fecha Registro,Transporte,Estado\n";
+        detalles.forEach(d => {
+            csv += `${d.vapor},${d.booking},${d.marca},${d.linea},${d.fechaPed},${d.contenedor},${d.fechaReg},${d.transp},${d.blasti}\n`;
+        });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "Reporte_Logistica_Comersuro.csv";
+        link.download = "Reporte_Comersuro.csv";
         link.click();
     }
 
-    window.onload = cargarDatosIniciales;
+    window.onload = cargarDatos;
 </script>
 </body>
 </html>
