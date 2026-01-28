@@ -163,28 +163,97 @@
         cargarDatos();
     }
 
-    async function guardarPedido() {
-        const p = {
-            action: "nuevoPedido", id: "P-"+Date.now().toString().slice(-4),
-            vapor: document.getElementById('vapor').value, linea: document.getElementById('linea').value,
-            booking: document.getElementById('booking_p').value, marca: document.getElementById('marca').value,
-            cantidad: document.getElementById('cant').value, fecha: document.getElementById('fecha').value.split("-").reverse().join("/"),
-            semana: document.getElementById('sem').value
-        };
-        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(p)});
-        alert("Pedido Guardado"); cargarDatos(); showStep(2);
-    }
+    // --- GUARDAR NUEVO PEDIDO CON BLOQUEO Y LIMPIEZA ---
+async function guardarPedido() {
+    const btn = event.target;
+    const v = document.getElementById('vapor').value;
+    const b = document.getElementById('booking_p').value;
+    const c = document.getElementById('cant').value;
+    
+    if(!v || !b || !c) return alert("Completa los campos obligatorios");
 
-    async function guardarDetalle() {
-        const d = {
-            action: "completarDetalle", idPedido: document.getElementById('idSel').value,
-            contenedor: document.getElementById('cont').value.toUpperCase(),
-            fecha: document.getElementById('fecha_carga').value.split("-").reverse().join("/"),
-            transp: document.getElementById('transp').value, blasti: "Blasti"
-        };
-        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(d)});
-        alert("Registro Exitoso"); cargarDatos(); showStep(4);
+    // BLOQUEO DEL BOTÓN
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+    const p = {
+        action: "nuevoPedido", 
+        id: "P-" + Date.now().toString().slice(-4),
+        vapor: v, 
+        linea: document.getElementById('linea').value,
+        booking: b, 
+        marca: document.getElementById('marca').value,
+        cantidad: c, 
+        fecha: document.getElementById('fecha').value.split("-").reverse().join("/"),
+        semana: document.getElementById('sem').value
+    };
+
+    try {
+        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(p)});
+        
+        // LIMPIEZA DE CAMPOS
+        document.getElementById('vapor').value = "";
+        document.getElementById('linea').value = "";
+        document.getElementById('booking_p').value = "";
+        document.getElementById('marca').value = "";
+        document.getElementById('cant').value = "";
+        document.getElementById('fecha').value = "";
+        
+        alert("✅ Pedido guardado con éxito");
+        await cargarDatos(); // Refrescar lista
+        showStep(2);
+    } catch(e) {
+        alert("❌ Error al guardar. Intenta de nuevo.");
+    } finally {
+        // DESBLOQUEO DEL BOTÓN
+        btn.disabled = false;
+        btn.innerHTML = "Guardar Pedido";
     }
+}
+
+// --- GUARDAR CONTENEDOR CON BLOQUEO Y LIMPIEZA ---
+async function guardarDetalle() {
+    const btn = event.target;
+    const id = document.getElementById('idSel').value;
+    const cont = document.getElementById('cont').value;
+    const trans = document.getElementById('transp').value;
+    const fecha = document.getElementById('fecha_carga').value;
+    
+    if(!id || !cont || !fecha) return alert("Completa todos los datos de carga");
+
+    // BLOQUEO DEL BOTÓN
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Registrando...';
+
+    const d = {
+        action: "completarDetalle", 
+        idPedido: id,
+        contenedor: cont.toUpperCase(), 
+        fecha: fecha.split("-").reverse().join("/"),
+        transp: trans, 
+        blasti: "Blasti"
+    };
+
+    try {
+        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(d)});
+        
+        // LIMPIEZA DE CAMPOS
+        document.getElementById('idSel').value = "";
+        document.getElementById('cont').value = "";
+        document.getElementById('transp').value = "";
+        document.getElementById('fecha_carga').value = "";
+        
+        alert("✅ Contenedor registrado correctamente");
+        await cargarDatos(); // Refrescar resumen
+        showStep(4);
+    } catch(e) {
+        alert("❌ Error en el registro.");
+    } finally {
+        // DESBLOQUEO DEL BOTÓN
+        btn.disabled = false;
+        btn.innerHTML = "Finalizar Registro";
+    }
+}
 
     function showStep(s, btn) {
         document.querySelectorAll('.step-content').forEach(x => x.classList.remove('active'));
