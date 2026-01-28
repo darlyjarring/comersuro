@@ -113,16 +113,25 @@
     let pedidos = [];
     let todosLosDetalles = [];
 
-    async function cargarDatosIniciales() {
-        try {
-            const response = await fetch(SCRIPT_URL);
-            const data = await response.json();
-            pedidos = data.pedidos;
-            todosLosDetalles = data.detalles;
-            render();
-            renderResumen();
-        } catch (e) { console.error("Error al cargar datos", e); }
+async function cargarDatosIniciales() {
+    const l = document.getElementById('lista');
+    try {
+        const response = await fetch(SCRIPT_URL);
+        if (!response.ok) throw new Error("Respuesta de red no ok");
+        
+        const data = await response.json();
+        
+        // Esta línea es la que evita el error 'undefined'
+        pedidos = data.pedidos || []; 
+        todosLosDetalles = data.detalles || [];
+        
+        render();
+        renderResumen();
+    } catch (e) { 
+        console.error("Error al cargar datos", e);
+        l.innerHTML = "<p class='text-center py-5 text-danger small'>Error de conexión o datos vacíos.</p>";
     }
+}
 
     function render() {
         const l = document.getElementById('lista');
