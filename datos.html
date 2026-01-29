@@ -144,31 +144,45 @@ function render() {
         l.appendChild(d);
     });
 }
+
     function renderResumen() {
-        const r = document.getElementById('listaResumen');
-        r.innerHTML = detalles.length ? "" : "Vacío";
-        detalles.slice().reverse().forEach(d => {
-            const item = document.createElement('div');
-            item.className = 'resumen-card';
-            item.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <b>${d.vapor}</b> | BK: ${d.booking}<br>
-                        <span class="text-muted">Marca: ${d.marca} | Línea: ${d.linea}</span><br>
-                        <b>Cont:</b> ${d.contenedor} | <b>Trans:</b> ${d.transp}<br>
-                        <small>P: ${d.fechaPed} | R: ${d.fechaReg}</small>
-                    </div>
-                    <div class="text-center">
-                        <div class="estado-pill ${d.blasti.toLowerCase()}" 
-                             ondblclick="cambiarEstado(${d.fila}, '${d.blasti}')">
-                             ${d.blasti}
-                        </div>
+    const r = document.getElementById('listaResumen');
+    r.innerHTML = "";
+
+    // Función interna para limpiar el formato ISO en el momento
+    const limpiar = (f) => {
+        if (!f) return "S/F";
+        // Si contiene la "T" del formato ISO (2026-01-28T05:00...)
+        if (typeof f === 'string' && f.includes('T')) {
+            let soloFecha = f.split('T')[0]; // Toma "2026-01-28"
+            let partes = soloFecha.split('-');
+            return `${partes[2]}/${partes[1]}/${partes[0]}`; // Retorna "28/01/2026"
+        }
+        return f; // Si ya está limpia, la deja igual
+    };
+
+    detalles.slice().reverse().forEach(d => {
+        const item = document.createElement('div');
+        item.className = 'resumen-card';
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <b>${d.vapor}</b> | BK: ${d.booking}<br>
+                    <span class="text-muted">Marca: ${d.marca} | Línea: ${d.linea}</span><br>
+                    <b>Cont:</b> ${d.contenedor} | <b>Trans:</b> ${d.transp}<br>
+                    <small>P: ${limpiar(d.fechaPed)} | R: ${limpiar(d.fechaReg)}</small>
+                </div>
+                <div class="text-center">
+                    <div class="estado-pill ${d.blasti.toLowerCase()}" 
+                         ondblclick="cambiarEstado(${d.fila}, '${d.blasti}')">
+                         ${d.blasti}
                     </div>
                 </div>
-            `;
-            r.appendChild(item);
-        });
-    }
+            </div>
+        `;
+        r.appendChild(item);
+    });
+}
 
     async function cambiarEstado(fila, actual) {
         const nuevo = actual === "Blasti" ? "Campo" : "Blasti";
