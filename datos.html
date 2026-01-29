@@ -313,34 +313,28 @@ async function guardarDetalle() {
     }
 
 function exportarExcel() {
-    if (!detalles || detalles.length === 0) return alert("No hay datos para exportar");
+    const limpiar = (f) => {
+        if (typeof f === 'string' && f.includes('T')) {
+            let partes = f.split('T')[0].split('-');
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+        return f;
+    };
 
-    // 1. Preparamos los datos con los nombres de columna que quieres
-    const datosExcel = detalles.map(d => ({
-        "Nave / Vapor": d.vapor,
+    const reporte = detalles.map(d => ({
+        "Vapor": d.vapor,
         "Booking": d.booking,
-        "Marca": d.marca,
-        "Línea Naviera": d.linea,
-        "Fecha Pedido": d.fechaPed,
+        "Fecha Pedido": limpiar(d.fechaPed),
+        "Fecha Registro": limpiar(d.fechaReg),
         "Contenedor": d.contenedor,
-        "Fecha Registro": d.fechaReg,
         "Transporte": d.transp,
         "Estado": d.blasti
     }));
-
-    // 2. Creamos el libro y la hoja de trabajo
-    const hoja = XLSX.utils.json_to_sheet(datosExcel);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, "Reporte Logística");
-
-    // 3. Ajuste sugerido de ancho de columnas (opcional)
-    hoja['!cols'] = [
-        {wch: 20}, {wch: 15}, {wch: 12}, {wch: 15}, {wch: 15}, 
-        {wch: 15}, {wch: 15}, {wch: 20}, {wch: 10}
-    ];
-
-    // 4. Descargamos el archivo .xlsx
-    XLSX.writeFile(libro, "Reporte_Comersuro_" + new Date().toLocaleDateString() + ".xlsx");
+    
+    const ws = XLSX.utils.json_to_sheet(reporte);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Logística");
+    XLSX.writeFile(wb, "Reporte_Comersuro.xlsx");
 }
 
     window.onload = cargarDatos;
