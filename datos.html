@@ -3,42 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
-    <title>COMERSURO LOGÍSTICA PRO</title>
+    <title>COMERSURO APP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <style>
-        :root { --azul: #004a87; --verde: #198754; --gris: #f8f9fa; }
-        body { background-color: var(--gris); font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 90px; overflow-x: hidden; }
-        .header-app { background: var(--azul); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        :root { --azul: #004a87; --gris: #f8f9fa; }
+        body { background: var(--gris); font-family: sans-serif; padding-bottom: 90px; }
+        .header-app { background: var(--azul); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
         .container-mobile { padding: 15px; }
         .step-content { display: none; }
         .step-content.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Tarjetas y Formularios */
-        .card-custom { background: white; border-radius: 15px; padding: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; border: none; }
-        .form-control, .form-select { height: 50px; border-radius: 12px; margin-bottom: 12px; font-size: 16px; border: 1px solid #ddd; text-transform: uppercase; }
-        .btn-main { height: 50px; border-radius: 12px; font-weight: bold; font-size: 16px; width: 100%; transition: 0.2s; }
-        
-        /* Lista de Pedidos */
+        .card-custom { background: white; border-radius: 15px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .form-control, .form-select { height: 50px; border-radius: 12px; margin-bottom: 12px; font-size: 16px; text-transform: uppercase; }
+        .btn-main { height: 50px; border-radius: 12px; font-weight: bold; width: 100%; }
         .p-item { border-left: 6px solid var(--azul); cursor: pointer; }
-        .vapor-title { font-size: 1.1rem; font-weight: bold; color: var(--azul); }
-        .scroll { height: calc(100vh - 230px); overflow-y: auto; padding-right: 5px; }
-
-        /* Resumen */
+        .scroll { height: calc(100vh - 230px); overflow-y: auto; }
         .resumen-card { font-size: 0.8rem; border-bottom: 1px solid #eee; padding: 12px 0; }
-        .estado-pill { cursor: pointer; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.7rem; display: inline-block; user-select: none; }
+        .estado-pill { cursor: pointer; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.7rem; display: inline-block; }
         .blasti { background: #e3f2fd; color: #007bff; border: 1px solid #007bff; }
         .campo { background: #fff3e0; color: #ef6c00; border: 1px solid #ef6c00; }
-
-        /* Navegación Inferior */
-        .nav-bottom { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { flex: 1; border: none; background: none; color: #a0a0a0; font-size: 0.75rem; text-align: center; padding-top: 12px; outline: none; }
+        .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; }
+        .nav-item { flex: 1; border: none; background: none; color: #a0a0a0; font-size: 0.75rem; text-align: center; padding-top: 12px; }
         .nav-item.active { color: var(--azul); font-weight: bold; }
-        .nav-item span { display: block; font-size: 1.5rem; margin-bottom: 2px; }
-        
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .nav-item span { display: block; font-size: 1.5rem; }
     </style>
 </head>
 <body>
@@ -46,63 +34,54 @@
 <div class="header-app">COMERSURO LOGÍSTICA</div>
 
 <div class="container-mobile">
-    
     <div id="step1" class="step-content active">
         <div class="card-custom">
-            <h6 class="mb-3 fw-bold">1. Crear Nuevo Pedido</h6>
-            <input type="text" id="vapor" class="form-control" placeholder="Nombre de la Nave">
-            <input type="text" id="linea" class="form-control" placeholder="Línea Naviera">
-            <input type="text" id="booking_p" class="form-control" placeholder="Número de Booking">
+            <h6 class="mb-3 fw-bold">1. Crear Pedido</h6>
+            <input type="text" id="vapor" class="form-control" placeholder="Nave">
+            <input type="text" id="linea" class="form-control" placeholder="Línea">
+            <input type="text" id="booking_p" class="form-control" placeholder="Booking">
             <input type="text" id="marca" class="form-control" placeholder="Marca">
             <div class="row g-2">
-                <div class="col-6"><input type="number" id="cant" class="form-control" placeholder="Cant. Cont."></div>
-                <div class="col-6"><input type="date" id="fecha" class="form-control" onchange="calcSemana()"></div>
+                <div class="col-4"><input type="number" id="cant" class="form-control" placeholder="Cant."></div>
+                <div class="col-4"><input type="text" id="sem_manual" class="form-control" placeholder="Semana"></div>
+                <div class="col-4"><input type="date" id="fecha" class="form-control"></div>
             </div>
-            <input type="hidden" id="sem">
-            <button onclick="guardarPedido()" class="btn btn-primary btn-main shadow" id="btnPedido">Guardar Pedido</button>
+            <button onclick="guardarPedido()" class="btn btn-primary btn-main" id="btnPedido">Guardar Pedido</button>
         </div>
     </div>
 
     <div id="step2" class="step-content">
-        <div class="d-flex justify-content-between mb-3 align-items-center">
+        <div class="d-flex justify-content-between mb-3">
             <span class="fw-bold text-muted small">PEDIDOS ACTIVOS</span>
-            <button onclick="cargarDatos()" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Actualizar 🔄</button>
+            <button onclick="cargarDatos()" class="btn btn-sm btn-light border">🔄</button>
         </div>
         <div id="lista" class="scroll"></div>
     </div>
 
     <div id="step3" class="step-content">
         <div class="card-custom border-top border-success border-4">
-            <h6 class="mb-3 fw-bold text-success">2. Registrar Contenedor</h6>
-            <label class="small fw-bold text-muted">PEDIDO SELECCIONADO</label>
+            <h6 class="mb-3 fw-bold text-success">2. Registrar Carga</h6>
             <input type="text" id="idSel" class="form-control bg-light text-center fw-bold" readonly>
-            
-            <input type="text" id="cont" class="form-control" placeholder="Número de Contenedor">
-            
+            <input type="text" id="cont" class="form-control" placeholder="Contenedor">
             <select id="transp" class="form-select">
-                <option value="" disabled selected>Seleccione Transportista</option>
-                <option value="TRANSPORTISTA A">TRANSPORTISTA A</option>
-                <option value="TRANSPORTISTA B">TRANSPORTISTA B</option>
-                <option value="TRANSPORTISTA C">TRANSPORTISTA C</option>
+                <option value="" disabled selected>Transportista</option>
+                <option value="TRANSPORTISTA 1">TRANSPORTISTA 1</option>
+                <option value="TRANSPORTISTA 2">TRANSPORTISTA 2</option>
+                <option value="TRANSPORTISTA 3">TRANSPORTISTA 3</option>
             </select>
-
             <input type="text" id="ventolera" class="form-control" placeholder="Ventolera (Opcional)">
-            
-            <label class="small fw-bold text-muted">FECHA DE CARGA</label>
             <input type="date" id="fecha_carga" class="form-control">
-            
-            <button onclick="guardarDetalle()" class="btn btn-success btn-main shadow" id="btnCarga">Finalizar Registro</button>
+            <button onclick="guardarDetalle()" class="btn btn-success btn-main" id="btnCarga">Finalizar Registro</button>
         </div>
     </div>
 
     <div id="step4" class="step-content">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <span class="fw-bold text-muted small">RESUMEN DE OPERACIONES</span>
-            <button onclick="exportarExcel()" class="btn btn-sm btn-success fw-bold px-3">Excel .xlsx 📥</button>
+            <span class="fw-bold text-muted small">HISTORIAL</span>
+            <button onclick="exportarExcel()" class="btn btn-sm btn-success fw-bold">Excel .xlsx 📥</button>
         </div>
         <div id="listaResumen" class="scroll card-custom"></div>
     </div>
-
 </div>
 
 <nav class="nav-bottom">
@@ -113,181 +92,99 @@
 </nav>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; // REEMPLAZAR CON TU URL DE APPS SCRIPT
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; 
     let pedidos = [], detalles = [];
 
-    // --- CARGAR DATOS ---
     async function cargarDatos() {
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
-            pedidos = data.pedidos || [];
-            detalles = data.detalles || [];
-            renderPedidos();
-            renderResumen();
-        } catch(e) { console.error(e); }
+            pedidos = data.pedidos || []; detalles = data.detalles || [];
+            renderPedidos(); renderResumen();
+        } catch(e) { console.log(e); }
     }
 
-    // --- LIMPIEZA DE FECHA ISO ---
-    const limpiarFecha = (f) => {
+    const limpiarF = (f) => {
         if (!f) return "S/F";
         if (typeof f === 'string' && f.includes('T')) {
-            let partes = f.split('T')[0].split('-');
-            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            let p = f.split('T')[0].split('-'); return `${p[2]}/${p[1]}/${p[0]}`;
         }
         return f;
     };
 
-    // --- RENDER LISTA DE PEDIDOS ---
     function renderPedidos() {
-        const l = document.getElementById('lista');
-        l.innerHTML = pedidos.length ? "" : "<p class='text-center mt-5 text-muted'>No hay pedidos activos.</p>";
+        const l = document.getElementById('lista'); l.innerHTML = "";
         pedidos.forEach(p => {
             const d = document.createElement('div');
-            const estaLleno = p.registrados >= p.cantidad;
-            d.className = `card-custom ${estaLleno ? 'bg-light opacity-75' : 'p-item'}`;
-            d.innerHTML = `
-                <div class="d-flex justify-content-between">
-                    <span class="vapor-title">${p.vapor}</span>
-                    <span class="badge ${estaLleno ? 'bg-success' : 'bg-primary'} rounded-pill">${p.registrados}/${p.cantidad}</span>
-                </div>
-                <div class="text-muted small mt-1">BK: ${p.booking} | ${p.linea}</div>
-                ${estaLleno ? '<div class="text-success fw-bold small mt-1">✓ COMPLETADO</div>' : ''}
-            `;
-            d.onclick = () => { 
-                if(!estaLleno) { document.getElementById('idSel').value = p.id; showStep(3); }
-                else { alert("Este pedido ya está completo."); }
-            };
+            const full = p.registrados >= p.cantidad;
+            d.className = `card-custom ${full ? 'bg-light opacity-75' : 'p-item'}`;
+            d.innerHTML = `<b>${p.vapor}</b> <span class="badge ${full?'bg-success':'bg-primary'} float-end">${p.registrados}/${p.cantidad}</span><br><small>BK: ${p.booking} | ${p.linea}</small>`;
+            d.onclick = () => { if(!full){ document.getElementById('idSel').value = p.id; showStep(3); } };
             l.appendChild(d);
         });
     }
 
-    // --- RENDER RESUMEN ---
     function renderResumen() {
-        const r = document.getElementById('listaResumen');
-        r.innerHTML = detalles.length ? "" : "No hay registros aún.";
+        const r = document.getElementById('listaResumen'); r.innerHTML = "";
         detalles.slice().reverse().forEach(d => {
             const item = document.createElement('div');
             item.className = 'resumen-card';
-            item.innerHTML = `
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <b>${d.vapor}</b> | BK: ${d.booking}<br>
-                        <span class="text-muted">${d.linea} | ${d.marca}</span><br>
-                        <b>CONT:</b> ${d.contenedor}<br>
-                        <small>TRANS: ${d.transp} | VENT: ${d.ventolera || 'N/A'}</small><br>
-                        <small class="text-primary">P: ${limpiarFecha(d.fechaPed)} | R: ${limpiarFecha(d.fechaReg)}</small>
-                    </div>
-                    <div class="text-center">
-                        <div class="estado-pill ${d.blasti.toLowerCase()}" ondblclick="cambiarEstado(${d.fila}, '${d.blasti}')">
-                            ${d.blasti}
-                        </div>
-                    </div>
-                </div>
-            `;
+            item.innerHTML = `<b>${d.vapor}</b> | ${d.contenedor}<br><small>T: ${d.transp} | V: ${d.ventolera||'---'}</small><br><small class="text-primary">P: ${limpiarF(d.fechaPed)} | R: ${limpiarF(d.fechaReg)}</small>
+            <div class="float-end estado-pill ${d.blasti.toLowerCase()}" ondblclick="cambiarEstado(${d.fila},'${d.blasti}')">${d.blasti}</div><div class="clearfix"></div>`;
             r.appendChild(item);
         });
     }
 
-    // --- GUARDAR PEDIDO ---
     async function guardarPedido() {
         const btn = document.getElementById('btnPedido');
-        const v = document.getElementById('vapor').value.toUpperCase();
-        const l = document.getElementById('linea').value.toUpperCase();
-        const b = document.getElementById('booking_p').value.toUpperCase();
-        const m = document.getElementById('marca').value.toUpperCase();
-        const c = document.getElementById('cant').value;
+        const v = document.getElementById('vapor').value.trim().toUpperCase();
+        const b = document.getElementById('booking_p').value.trim().toUpperCase();
         const f = document.getElementById('fecha').value;
-
-        if(!v || !b || !c || !f) return alert("Complete los campos obligatorios");
-
-        btn.disabled = true;
-        btn.innerHTML = "Guardando...";
-
-        const payload = {
-            action: "nuevoPedido", id: "P-" + Date.now().toString().slice(-4),
-            vapor: v, linea: l, booking: b, marca: m, cantidad: c,
-            fecha: f.split("-").reverse().join("/"), semana: document.getElementById('sem').value
-        };
-
-        try {
-            await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(payload)});
-            ["vapor", "linea", "booking_p", "marca", "cant", "fecha"].forEach(id => document.getElementById(id).value = "");
-            alert("✅ Pedido guardado");
-            await cargarDatos();
-            showStep(2);
-        } catch(e) { alert("Error"); }
-        finally { btn.disabled = false; btn.innerHTML = "Guardar Pedido"; }
+        const s = document.getElementById('sem_manual').value.trim().toUpperCase();
+        if(!v || !b || !f || !s) return alert("Faltan datos");
+        btn.disabled = true; btn.innerHTML = "...";
+        const p = { action:"nuevoPedido", id:"P-"+Date.now().toString().slice(-4), vapor:v, linea:document.getElementById('linea').value.trim().toUpperCase(), booking:b, marca:document.getElementById('marca').value.trim().toUpperCase(), cantidad:document.getElementById('cant').value, fecha:f.split("-").reverse().join("/"), semana:s };
+        await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(p)});
+        ["vapor", "linea", "booking_p", "marca", "cant", "fecha", "sem_manual"].forEach(i => document.getElementById(i).value="");
+        btn.disabled = false; btn.innerHTML = "Guardar Pedido"; alert("Guardado"); cargarDatos(); showStep(2);
     }
 
-    // --- GUARDAR CONTENEDOR ---
     async function guardarDetalle() {
         const btn = document.getElementById('btnCarga');
         const id = document.getElementById('idSel').value;
-        const cont = document.getElementById('cont').value.toUpperCase().trim();
-        const tr = document.getElementById('transp').value;
-        const vent = document.getElementById('ventolera').value.toUpperCase().trim();
-        const fec = document.getElementById('fecha_carga').value;
-
-        if(!id || !cont || !tr || !fec) return alert("Complete Contenedor, Transportista y Fecha");
-
-        btn.disabled = true;
-        btn.innerHTML = "Registrando...";
-
-        const payload = {
-            action: "completarDetalle", idPedido: id, contenedor: cont,
-            fecha: fec.split("-").reverse().join("/"), transp: tr, ventolera: vent, blasti: "Blasti"
-        };
-
-        try {
-            fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(payload)});
-            setTimeout(async () => {
-                ["cont", "transp", "ventolera", "fecha_carga", "idSel"].forEach(id => document.getElementById(id).value = "");
-                btn.disabled = false; btn.innerHTML = "Finalizar Registro";
-                alert("✅ Contenedor registrado");
-                await cargarDatos();
-                showStep(4);
-            }, 1000);
-        } catch(e) { alert("Error"); btn.disabled = false; }
+        const c = document.getElementById('cont').value.trim().toUpperCase();
+        const t = document.getElementById('transp').value;
+        const v = document.getElementById('ventolera').value.trim().toUpperCase();
+        const f = document.getElementById('fecha_carga').value;
+        if(!id || !c || !t || !f) return alert("Complete Contenedor, Transportista y Fecha");
+        btn.disabled = true; btn.innerHTML = "...";
+        const p = { action:"completarDetalle", idPedido:id, contenedor:c, fecha:f.split("-").reverse().join("/"), transp:t, ventolera:v, blasti:"Blasti" };
+        fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(p)});
+        setTimeout(async () => {
+            ["cont", "transp", "ventolera", "fecha_carga", "idSel"].forEach(i => document.getElementById(i).value="");
+            btn.disabled = false; btn.innerHTML = "Finalizar Registro"; alert("Registrado"); await cargarDatos(); showStep(4);
+        }, 1000);
     }
 
-    // --- CAMBIAR ESTADO ---
-    async function cambiarEstado(fila, actual) {
-        const nuevo = actual === "Blasti" ? "Campo" : "Blasti";
-        if(!confirm(`¿Cambiar estado a ${nuevo}?`)) return;
-        await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({action:"cambiarEstado", fila: fila, nuevoEstado: nuevo})});
-        alert("Actualizado");
+    async function cambiarEstado(fila, act) {
+        const n = act === "Blasti" ? "Campo" : "Blasti";
+        if(!confirm("Cambiar a "+n+"?")) return;
+        await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body:JSON.stringify({action:"cambiarEstado", fila:fila, nuevoEstado:n})});
         cargarDatos();
     }
 
-    // --- EXPORTAR EXCEL (.xlsx) ---
     function exportarExcel() {
-        if (!detalles.length) return alert("Sin datos");
-        const reporte = detalles.map(d => ({
-            "Vapor": d.vapor, "Booking": d.booking, "Marca": d.marca, "Línea": d.linea,
-            "Fecha Pedido": limpiarFecha(d.fechaPed), "Contenedor": d.contenedor,
-            "Fecha Registro": limpiarFecha(d.fechaReg), "Transporte": d.transp, "Ventolera": d.ventolera || "", "Estado": d.blasti
-        }));
-        const ws = XLSX.utils.json_to_sheet(reporte);
-        const wb = XLSX.utils.book_new();
+        const r = detalles.map(d => ({ "Vapor":d.vapor, "Booking":d.booking, "Fecha Pedido":limpiarF(d.fechaPed), "Contenedor":d.contenedor, "Registro":limpiarF(d.fechaReg), "Transporte":d.transp, "Ventolera":d.ventolera, "Estado":d.blasti }));
+        const ws = XLSX.utils.json_to_sheet(r); const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Logística");
-        XLSX.writeFile(wb, `Logistica_Comersuro_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.writeFile(wb, "Reporte_Logistica.xlsx");
     }
 
-    // --- UTILIDADES ---
-    function showStep(s, btn) {
+    function showStep(s, b) {
         document.querySelectorAll('.step-content').forEach(x => x.classList.remove('active'));
         document.getElementById('step' + s).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        if(btn) btn.classList.add('active'); else document.querySelectorAll('.nav-item')[s-1].classList.add('active');
-        window.scrollTo(0,0);
-    }
-
-    function calcSemana() {
-        const v = document.getElementById('fecha').value; if(!v) return;
-        const d = new Date(v); d.setHours(0,0,0,0); d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-        const s = Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + 1) / 7);
-        document.getElementById('sem').value = s;
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if(b) b.classList.add('active'); else document.querySelectorAll('.nav-item')[s-1].classList.add('active');
     }
 
     window.onload = cargarDatos;
