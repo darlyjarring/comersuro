@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
-    <title>COMERSURO APP</title>
+    <title>COMERSURO LOGÍSTICA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -43,7 +43,7 @@
             <input type="text" id="marca" class="form-control" placeholder="Marca">
             <div class="row g-2">
                 <div class="col-4"><input type="number" id="cant" class="form-control" placeholder="Cant."></div>
-                <div class="col-4"><input type="text" id="sem_manual" class="form-control" placeholder="Semana"></div>
+                <div class="col-4"><input type="text" id="sem" class="form-control" placeholder="Semana"></div>
                 <div class="col-4"><input type="date" id="fecha" class="form-control"></div>
             </div>
             <button onclick="guardarPedido()" class="btn btn-primary btn-main" id="btnPedido">Guardar Pedido</button>
@@ -61,7 +61,8 @@
     <div id="step3" class="step-content">
         <div class="card-custom border-top border-success border-4">
             <h6 class="mb-3 fw-bold text-success">2. Registrar Carga</h6>
-            <input type="text" id="idSel" class="form-control bg-light text-center fw-bold" readonly>
+            <div id="infoPedidoActual" class="small mb-2 text-primary fw-bold text-center"></div>
+            <input type="hidden" id="idSel">
             <input type="text" id="cont" class="form-control" placeholder="Contenedor">
             <select id="transp" class="form-select">
                 <option value="" disabled selected>Transportista</option>
@@ -72,6 +73,7 @@
             <input type="text" id="ventolera" class="form-control" placeholder="Ventolera (Opcional)">
             <input type="date" id="fecha_carga" class="form-control">
             <button onclick="guardarDetalle()" class="btn btn-success btn-main" id="btnCarga">Finalizar Registro</button>
+            <button onclick="showStep(2)" class="btn btn-link w-100 mt-2 text-decoration-none text-muted">Atrás / Cambiar Pedido</button>
         </div>
     </div>
 
@@ -101,6 +103,7 @@
             const data = await res.json();
             pedidos = data.pedidos || []; detalles = data.detalles || [];
             renderPedidos(); renderResumen();
+            actualizarBannerRegistro();
         } catch(e) { console.log(e); }
     }
 
@@ -119,9 +122,23 @@
             const full = p.registrados >= p.cantidad;
             d.className = `card-custom ${full ? 'bg-light opacity-75' : 'p-item'}`;
             d.innerHTML = `<b>${p.vapor}</b> <span class="badge ${full?'bg-success':'bg-primary'} float-end">${p.registrados}/${p.cantidad}</span><br><small>BK: ${p.booking} | ${p.linea}</small>`;
-            d.onclick = () => { if(!full){ document.getElementById('idSel').value = p.id; showStep(3); } };
+            d.onclick = () => { 
+                if(!full){ 
+                    document.getElementById('idSel').value = p.id; 
+                    actualizarBannerRegistro(p);
+                    showStep(3); 
+                } else {
+                    alert("⚠️ Pedido completo ("+p.cantidad+"/"+p.cantidad+")");
+                }
+            };
             l.appendChild(d);
         });
+    }
+
+    function actualizarBannerRegistro(pManual) {
+        const id = document.getElementById('idSel').value;
+        const p = pManual || pedidos.find(x => x.id === id);
+        if(p) document.getElementById('infoPedidoActual').innerText = `${p.vapor} (BK: ${p.booking}) - Faltan: ${p.cantidad - p.registrados}`;
     }
 
     function renderResumen() {
@@ -137,33 +154,48 @@
 
     async function guardarPedido() {
         const btn = document.getElementById('btnPedido');
-        const v = document.getElementById('vapor').value.trim().toUpperCase();
-        const b = document.getElementById('booking_p').value.trim().toUpperCase();
-        const f = document.getElementById('fecha').value;
-        const s = document.getElementById('sem_manual').value.trim().toUpperCase();
+        const v = document.getElementById('vapor').value.trim().toUpperCase(), b = document.getElementById('booking_p').value.trim().toUpperCase();
+        const f = document.getElementById('fecha').value, s = document.getElementById('sem').value.toUpperCase();
         if(!v || !b || !f || !s) return alert("Faltan datos");
         btn.disabled = true; btn.innerHTML = "...";
         const p = { action:"nuevoPedido", id:"P-"+Date.now().toString().slice(-4), vapor:v, linea:document.getElementById('linea').value.trim().toUpperCase(), booking:b, marca:document.getElementById('marca').value.trim().toUpperCase(), cantidad:document.getElementById('cant').value, fecha:f.split("-").reverse().join("/"), semana:s };
         await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(p)});
-        ["vapor", "linea", "booking_p", "marca", "cant", "fecha", "sem_manual"].forEach(i => document.getElementById(i).value="");
-        btn.disabled = false; btn.innerHTML = "Guardar Pedido"; alert("Guardado"); cargarDatos(); showStep(2);
+        ["vapor", "linea", "booking_p", "marca", "cant", "fecha", "sem"].forEach(i => document.getElementById(i).value="");
+        btn.disabled = false; btn.innerHTML = "Guardar Pedido"; alert("✅ Guardado"); await cargarDatos(); showStep(2);
     }
 
     async function guardarDetalle() {
         const btn = document.getElementById('btnCarga');
-        const id = document.getElementById('idSel').value;
-        const c = document.getElementById('cont').value.trim().toUpperCase();
-        const t = document.getElementById('transp').value;
+        const id = document.getElementById('idSel').value, c = document.getElementById('cont').value.trim().toUpperCase();
+        const t = document.getElementById('transp').value, f = document.getElementById('fecha_carga').value;
         const v = document.getElementById('ventolera').value.trim().toUpperCase();
-        const f = document.getElementById('fecha_carga').value;
-        if(!id || !c || !t || !f) return alert("Complete Contenedor, Transportista y Fecha");
-        btn.disabled = true; btn.innerHTML = "...";
-        const p = { action:"completarDetalle", idPedido:id, contenedor:c, fecha:f.split("-").reverse().join("/"), transp:t, ventolera:v, blasti:"Blasti" };
-        fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(p)});
-        setTimeout(async () => {
-            ["cont", "transp", "ventolera", "fecha_carga", "idSel"].forEach(i => document.getElementById(i).value="");
-            btn.disabled = false; btn.innerHTML = "Finalizar Registro"; alert("Registrado"); await cargarDatos(); showStep(4);
-        }, 1000);
+
+        if(!id || !c || !t || !f) return alert("Faltan datos");
+
+        const pActual = pedidos.find(x => x.id === id);
+        if(pActual && pActual.registrados >= pActual.cantidad) return alert("❌ Error: Límite alcanzado.");
+
+        btn.disabled = true; btn.innerHTML = "Guardando...";
+
+        const payload = { action:"completarDetalle", idPedido:id, contenedor:c, fecha:f.split("-").reverse().join("/"), transp:t, ventolera:v, blasti:"Blasti" };
+        
+        try {
+            fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(payload)});
+            setTimeout(async () => {
+                alert("✅ Registrado: " + c);
+                document.getElementById('cont').value = ""; // Limpia solo contenedor
+                await cargarDatos(); // Actualiza conteo en banner
+                
+                const pRevision = pedidos.find(x => x.id === id);
+                if(pRevision && pRevision.registrados >= pRevision.cantidad) {
+                    alert("🎊 Pedido finalizado.");
+                    showStep(4);
+                } else {
+                    btn.disabled = false; btn.innerHTML = "Finalizar Registro";
+                    document.getElementById('cont').focus();
+                }
+            }, 1200);
+        } catch(e) { alert("Error"); btn.disabled = false; }
     }
 
     async function cambiarEstado(fila, act) {
