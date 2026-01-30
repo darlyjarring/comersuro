@@ -3,80 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Semanal - COMERSURO</title>
+    <title>Resumen Semanal - COMERSURO</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --azul: #004a87; --gris: #f8f9fa; }
-        body { background: var(--gris); font-family: 'Segoe UI', sans-serif; padding: 20px; }
-        .card-kpi { background: white; border-radius: 12px; padding: 20px; border-left: 5px solid var(--azul); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .table-container { background: white; border-radius: 12px; padding: 15px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .header-title { color: var(--azul); font-weight: bold; margin-bottom: 25px; border-bottom: 2px solid var(--azul); display: inline-block; }
-        .badge-campo { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ef6c00; }
-        .resumen-texto { font-size: 0.9rem; color: #555; }
+        :root { --azul: #004a87; --gris: #f4f7f6; }
+        body { background: var(--gris); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+        .kpi-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-top: 4px solid var(--azul); transition: 0.3s; }
+        .kpi-card:hover { transform: translateY(-5px); }
+        .kpi-val { font-size: 2rem; font-weight: bold; color: var(--azul); }
+        .kpi-label { font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .table-resumen { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .table thead { background: var(--azul); color: white; }
+        .badge-campo { background: #28a745; color: white; padding: 5px 10px; border-radius: 10px; font-size: 0.7rem; }
+        .badge-blasti { background: #007bff; color: white; padding: 5px 10px; border-radius: 10px; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
 <div class="container-fluid">
-    <h2 class="header-title">📊 PANEL DE CONTROL SEMANAL</h2>
-
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <label class="fw-bold small">SELECCIONAR SEMANA:</label>
-            <select id="filtroSemana" class="form-select" onchange="procesarDatos()">
-                <option value="">Cargando semanas...</option>
-            </select>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-dark m-0">📊 REPORTE DE GESTIÓN SEMANAL</h3>
+        <div class="d-flex gap-2">
+            <input type="text" id="inputSemana" class="form-control" placeholder="Ej: SEM 05" style="width: 150px;">
+            <button onclick="procesarConsultas()" class="btn btn-primary px-4">Consultar</button>
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4 text-center">
         <div class="col-md-3">
-            <div class="card-kpi">
-                <small class="text-muted d-block">SEMANA</small>
-                <h3 id="kpiSemana">-</h3>
+            <div class="kpi-card">
+                <div class="kpi-label">Semana Consultada</div>
+                <div class="kpi-val" id="valSemana">---</div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card-kpi" style="border-left-color: #28a745;">
-                <small class="text-muted d-block">TOTAL CONTENEDORES</small>
-                <h3 id="kpiTotal">0</h3>
+            <div class="kpi-card" style="border-top-color: #28a745;">
+                <div class="kpi-label">Total Contenedores</div>
+                <div class="kpi-val" id="valTotal">0</div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card-kpi" style="border-left-color: #ef6c00;">
-                <small class="text-muted d-block">TOTAL A CAMPO</small>
-                <h3 id="kpiCampo">0</h3>
+            <div class="kpi-card" style="border-top-color: #ef6c00;">
+                <div class="kpi-label">Despachados (CAMPO)</div>
+                <div class="kpi-val" id="valCampo">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card" style="border-top-color: #6f42c1;">
+                <div class="kpi-label">En Puerto (BLASTI)</div>
+                <div class="kpi-val" id="valBlasti">0</div>
             </div>
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-5">
-            <div class="card-kpi" style="height: 100%;">
-                <h6 class="fw-bold mb-3">Distribución por Transportista / Línea</h6>
-                <canvas id="chartTransporte"></canvas>
-                <div id="desgloseLineas" class="mt-4 resumen-texto"></div>
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="kpi-card h-100">
+                <h6 class="fw-bold mb-4">DISTRIBUCIÓN POR TRANSPORTISTA</h6>
+                <canvas id="chartTransp" style="max-height: 250px;"></canvas>
+                <div id="desgloseLineas" class="mt-4 small">
+                    </div>
             </div>
         </div>
 
-        <div class="col-md-7">
-            <div class="table-container">
-                <h6 class="fw-bold mb-3">Detalle de Operaciones</h6>
-                <div class="table-responsive" style="max-height: 500px;">
-                    <table class="table table-hover align-middle small">
-                        <thead class="table-light sticky-top">
+        <div class="col-lg-8">
+            <div class="table-resumen h-100 p-3">
+                <h6 class="fw-bold mb-3">LISTADO DETALLADO</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover small">
+                        <thead>
                             <tr>
                                 <th>BOOKING</th>
-                                <th>TRANSPORTISTA</th>
-                                <th>NAVE / LÍNEA</th>
+                                <th>NAVE</th>
+                                <th>LÍNEA</th>
                                 <th>CONTENEDOR</th>
-                                <th>REGISTRO</th>
+                                <th>TRANSPORTISTA</th>
                                 <th>VENTOLERA</th>
                                 <th>ESTADO</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaCuerpo"></tbody>
+                        <tbody id="cuerpoTabla">
+                            <tr><td colspan="7" class="text-center text-muted">Ingrese una semana para consultar</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -85,106 +94,97 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; // REEMPLAZA CON TU URL
-    let datosCompletos = {};
-    let chartInstance = null;
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec";
+    let dataGlobal = null;
+    let chartObj = null;
 
-    async function obtenerDatos() {
+    async function cargarBase() {
         const res = await fetch(SCRIPT_URL);
-        datosCompletos = await res.json();
-        poblarSemanas();
+        dataGlobal = await res.json();
     }
 
-    function poblarSemanas() {
-        const select = document.getElementById('filtroSemana');
-        // Extraer semanas únicas de la lista de pedidos
-        const semanas = [...new Set(datosCompletos.pedidos.map(p => p.semana))].sort();
-        select.innerHTML = '<option value="">Elegir...</option>';
-        semanas.forEach(s => {
-            if(s) select.innerHTML += `<option value="${s}">${s}</option>`;
-        });
+    function procesarConsultas() {
+        const busqueda = document.getElementById('inputSemana').value.trim().toUpperCase();
+        if(!busqueda || !dataGlobal) return alert("Cargando datos o semana vacía");
+
+        // 1. Filtrar Pedidos por semana
+        const pedidosFiltrados = dataGlobal.pedidos.filter(p => p.semana === busqueda);
+        const idsSemana = pedidosFiltrados.map(p => p.id);
+
+        // 2. Filtrar Detalles que pertenecen a esos Pedidos
+        const detallesSemana = dataGlobal.detalles.filter(d => idsSemana.includes(d.idPedido));
+
+        if(detallesSemana.length === 0) {
+            alert("No hay registros para esa semana.");
+            return;
+        }
+
+        // Actualizar KPIs
+        document.getElementById('valSemana').innerText = busqueda;
+        document.getElementById('valTotal').innerText = detallesSemana.length;
+        document.getElementById('valCampo').innerText = detallesSemana.filter(d => d.blasti === 'Campo').length;
+        document.getElementById('valBlasti').innerText = detallesSemana.filter(d => d.blasti === 'Blasti').length;
+
+        renderTabla(detallesSemana);
+        generarGraficoYDesglose(detallesSemana);
     }
 
-    function procesarDatos() {
-        const semBusqueda = document.getElementById('filtroSemana').value;
-        if (!semBusqueda) return;
-
-        // 1. Obtener IDs de pedidos que pertenecen a esa semana
-        const idsPedidosSemana = datosCompletos.pedidos
-            .filter(p => p.semana === semBusqueda)
-            .map(p => p.id);
-
-        // 2. Filtrar detalles que correspondan a esos IDs
-        const filas = datosCompletos.detalles.filter(d => idsPedidosSemana.includes(d.idPedido));
-
-        // Actualizar KPIs básicos
-        document.getElementById('kpiSemana').innerText = semBusqueda;
-        document.getElementById('kpiTotal').innerText = filas.length;
-        document.getElementById('kpiCampo').innerText = filas.filter(f => f.blasti === 'Campo').length;
-
-        renderTabla(filas);
-        generarGrafico(filas);
-    }
-
-    function renderTabla(filas) {
-        const tbody = document.getElementById('tablaCuerpo');
+    function renderTabla(datos) {
+        const tbody = document.getElementById('cuerpoTabla');
         tbody.innerHTML = "";
-        filas.forEach(f => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="fw-bold">${f.booking}</td>
-                <td>${f.transp}</td>
-                <td>${f.vapor}<br><small class="text-muted">${f.linea}</small></td>
-                <td>${f.contenedor}</td>
-                <td>${f.fechaReg}</td>
-                <td>${f.ventolera || '---'}</td>
-                <td><span class="badge ${f.blasti === 'Campo' ? 'badge-campo' : 'text-primary border'}">${f.blasti}</span></td>
+        datos.forEach(d => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${d.booking}</td>
+                    <td>${d.vapor}</td>
+                    <td>${d.linea}</td>
+                    <td>${d.contenedor}</td>
+                    <td>${d.transp}</td>
+                    <td>${d.ventolera || '---'}</td>
+                    <td><span class="${d.blasti === 'Campo' ? 'badge-campo' : 'badge-blasti'}">${d.blasti.toUpperCase()}</span></td>
+                </tr>
             `;
-            tbody.appendChild(tr);
         });
     }
 
-    function generarGrafico(filas) {
-        const conteoTransp = {};
-        const desglose = {}; // { TRANSPORTISTA: { LINEA: CANTIDAD } }
+    function generarGraficoYDesglose(datos) {
+        const conteo = {}; // { TRANSPORTISTA: total }
+        const desglose = {}; // { TRANSPORTISTA: { LINEA: total } }
 
-        filas.forEach(f => {
-            // Conteo simple para gráfico
-            conteoTransp[f.transp] = (conteoTransp[f.transp] || 0) + 1;
+        datos.forEach(d => {
+            conteo[d.transp] = (conteo[d.transp] || 0) + 1;
             
-            // Desglose por línea
-            if (!desglose[f.transp]) desglose[f.transp] = {};
-            desglose[f.transp][f.linea] = (desglose[f.transp][f.linea] || 0) + 1;
+            if(!desglose[d.transp]) desglose[d.transp] = {};
+            desglose[d.transp][d.linea] = (desglose[d.transp][d.linea] || 0) + 1;
         });
 
-        // Dibujar Gráfico
-        const ctx = document.getElementById('chartTransporte').getContext('2d');
-        if (chartInstance) chartInstance.destroy();
-        
-        chartInstance = new Chart(ctx, {
+        // Chart
+        const ctx = document.getElementById('chartTransp').getContext('2d');
+        if(chartObj) chartObj.destroy();
+        chartObj = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: Object.keys(conteoTransp),
+                labels: Object.keys(conteo),
                 datasets: [{
-                    data: Object.values(conteoTransp),
-                    backgroundColor: ['#004a87', '#28a745', '#ffc107', '#dc3545', '#6c757d']
+                    data: Object.values(conteo),
+                    backgroundColor: ['#004a87', '#28a745', '#ef6c00', '#6f42c1', '#dc3545']
                 }]
             },
             options: { plugins: { legend: { position: 'bottom' } } }
         });
 
-        // Renderizar texto de desglose
-        let htmlDesglose = "<strong>Detalle por Línea:</strong><br>";
-        for (const [transp, lineas] of Object.entries(desglose)) {
-            htmlDesglose += `<div class="mt-2 text-primary fw-bold">${transp} (${conteoTransp[transp]})</div>`;
-            for (const [linea, cant] of Object.entries(lineas)) {
-                htmlDesglose += `&nbsp;&nbsp;• ${linea}: ${cant} cont.<br>`;
+        // Texto Desglose
+        let html = "<hr><strong>Desglose por Línea:</strong><br>";
+        for(let tr in desglose) {
+            html += `<div class="mt-2 text-dark fw-bold">${tr} (${conteo[tr]})</div>`;
+            for(let lin in desglose[tr]) {
+                html += `<div class="text-muted ms-2">└ ${lin}: ${desglose[tr][lin]}</div>`;
             }
         }
-        document.getElementById('desgloseLineas').innerHTML = htmlDesglose;
+        document.getElementById('desgloseLineas').innerHTML = html;
     }
 
-    window.onload = obtenerDatos;
+    window.onload = cargarBase;
 </script>
 
 </body>
