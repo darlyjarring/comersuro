@@ -76,20 +76,15 @@
             <h6 class="mb-2 fw-bold text-success">2. Registrar Carga</h6>
             <div id="infoPedidoActual" class="small mb-3 text-primary fw-bold text-center"></div>
             <input type="hidden" id="idSel">
-            
             <input type="text" id="cont" class="form-control" placeholder="Contenedor">
-            
             <select id="transp" class="form-select">
                 <option value="" disabled selected>Transportista</option>
                 <option value="TRANSPORTISTA 1">TRANSPORTISTA 1</option>
                 <option value="TRANSPORTISTA 2">TRANSPORTISTA 2</option>
                 <option value="TRANSPORTISTA 3">TRANSPORTISTA 3</option>
             </select>
-
             <input type="text" id="ventolera" class="form-control" placeholder="Ventolera (Opcional)">
-            
             <input type="date" id="fecha_carga" class="form-control" title="FECHA">
-            
             <button onclick="guardarDetalle()" class="btn btn-success btn-main shadow-sm" id="btnCarga">Finalizar Registro</button>
             <button onclick="showStep(2)" class="btn btn-link w-100 mt-2 text-muted text-decoration-none small">Atrás a la lista</button>
         </div>
@@ -119,7 +114,6 @@
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
-            // AJUSTE: Tu .gs devuelve {pedidos: [], detalles: []}
             pedidos = data.pedidos || []; 
             detalles = data.detalles || [];
             renderPedidos(); 
@@ -128,59 +122,64 @@
         } catch(e) { console.error("Error al cargar:", e); }
     }
 
+    // ESTA FUNCIÓN ES LA QUE ARREGLA EL FORMATO DE FECHA T05:00...
     const limpiarF = (f) => {
         if (!f) return "S/F";
+        if (typeof f === 'string' && f.includes('T')) {
+            let p = f.split('T')[0].split('-'); 
+            return `${p[2]}/${p[1]}/${p[0]}`;
+        }
         return f;
     };
 
-function renderPedidos() {
-    const l = document.getElementById('lista'); 
-    l.innerHTML = "";
-    if(pedidos.length === 0) {
-        l.innerHTML = "<p class='text-center text-muted'>No hay pedidos pendientes.</p>";
-        return;
+    function renderPedidos() {
+        const l = document.getElementById('lista'); 
+        l.innerHTML = "";
+        if(pedidos.length === 0) {
+            l.innerHTML = "<p class='text-center text-muted'>No hay pedidos pendientes.</p>";
+            return;
+        }
+
+        pedidos.forEach(p => {
+            const v_vapor = p.vapor || "S/N";
+            const v_linea = p.linea || "S/L";
+            // CORRECCIÓN: Aplicamos limpiarF para evitar el formato largo de fecha
+            const v_fecha = limpiarF(p.fechaP); 
+            const v_semana = p.semana || "--";
+            const v_booking = p.booking || "S/B";
+            const v_registrados = p.registrados || 0; 
+            const v_cantidad = p.cantidad || 0;
+
+            const full = v_registrados >= v_cantidad && v_cantidad > 0;
+
+            const d = document.createElement('div');
+            d.className = `card-custom ${full ? 'bg-light opacity-75' : 'p-item'}`;
+            
+            d.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <b style="color: var(--azul);">${v_vapor}</b><br>
+                        <small class="text-dark fw-bold">BK: ${v_booking}</small><br>
+                        <small class="text-muted">${v_linea} | Sem: ${v_semana}</small><br>
+                        <small class="text-muted">Fecha: ${v_fecha}</small>
+                    </div>
+                    <span class="badge ${full ? 'bg-success' : 'bg-primary'} shadow-sm">
+                        ${v_registrados}/${v_cantidad}
+                    </span>
+                </div>`;
+
+            d.onclick = () => { 
+                if(!full){ 
+                    document.getElementById('idSel').value = p.id; 
+                    actualizarBannerRegistro(p);
+                    showStep(3); 
+                } else {
+                    alert("Este pedido ya está completo.");
+                }
+            };
+            l.appendChild(d);
+        });
     }
-
-    pedidos.forEach(p => {
-        // CORRECCIÓN: Usar p.fechaP y p.semana que vienen del archivo.gs
-        const v_vapor = p.vapor || "S/N";
-        const v_linea = p.linea || "S/L";
-        const v_fecha = p.fechaP || "S/F"; 
-        const v_semana = p.semana || "--";
-        const v_booking = p.booking || "S/B";
-        const v_registrados = p.registrados || 0; 
-        const v_cantidad = p.cantidad || 0;
-
-        const full = v_registrados >= v_cantidad && v_cantidad > 0;
-
-        const d = document.createElement('div');
-        d.className = `card-custom ${full ? 'bg-light opacity-75' : 'p-item'}`;
-        
-        d.innerHTML = `
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <b style="color: var(--azul);">${v_vapor}</b><br>
-                    <small class="text-dark fw-bold">BK: ${v_booking}</small><br>
-                    <small class="text-muted">${v_linea} | Sem: ${v_semana}</small><br>
-                    <small class="text-muted">Fecha: ${v_fecha}</small>
-                </div>
-                <span class="badge ${full ? 'bg-success' : 'bg-primary'} shadow-sm">
-                    ${v_registrados}/${v_cantidad}
-                </span>
-            </div>`;
-
-        d.onclick = () => { 
-            if(!full){ 
-                document.getElementById('idSel').value = p.id; 
-                actualizarBannerRegistro(p);
-                showStep(3); 
-            } else {
-                alert("Este pedido ya está completo.");
-            }
-        };
-        l.appendChild(d);
-    });
-}
 
     function actualizarBannerRegistro(pManual) {
         const id = document.getElementById('idSel').value;
