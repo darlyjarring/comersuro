@@ -134,26 +134,55 @@
         return f;
     };
 
-    function renderPedidos() {
-        const l = document.getElementById('lista'); l.innerHTML = "";
-        if(pedidos.length === 0) l.innerHTML = "<p class='text-center text-muted'>No hay pedidos pendientes.</p>";
-        pedidos.forEach(p => {
-            const full = p.registrados >= p.cantidad;
-            const d = document.createElement('div');
-            d.className = `card-custom ${full ? 'bg-light opacity-75' : 'p-item'}`;
-            d.innerHTML = `<b>${p.vapor}</b> <span class="badge ${full?'bg-success':'bg-primary'} float-end">${p.registrados}/${p.cantidad}</span><br><small class="text-muted">BK: ${p.booking} | ${p.linea}</small>`;
-            d.onclick = () => { 
-                if(!full){ 
-                    document.getElementById('idSel').value = p.id; 
-                    actualizarBannerRegistro(p);
-                    showStep(3); 
-                } else {
-                    alert("Este pedido ya está completo.");
-                }
-            };
-            l.appendChild(d);
-        });
+function renderPedidos() {
+    const l = document.getElementById('lista'); 
+    l.innerHTML = "";
+    if(pedidos.length === 0) {
+        l.innerHTML = "<p class='text-center text-muted'>No hay pedidos pendientes.</p>";
+        return;
     }
+
+    pedidos.forEach(p => {
+        // Buscamos los valores con nombres flexibles (Mayúsculas/Minúsculas)
+        const v_vapor = p.vapor || p.Vapor || "S/N";
+        const v_linea = p.linea || p.Linea || p.Línea || "S/L";
+        const v_fecha = p.fecha || p.Fecha || "S/F";
+        const v_booking = p.booking || p.Booking || "S/B";
+        
+        // El contador de registrados: si no existe, ponemos 0
+        const v_registrados = p.registrados || 0; 
+        const v_cantidad = p.cantidad || p.Cantidad || 1;
+
+        const full = v_registrados >= v_cantidad;
+
+        const d = document.createElement('div');
+        d.className = `card-custom ${full ? 'bg-light opacity-75' : 'p-item'}`;
+        
+        // AQUÍ CORREGIMOS EL DISEÑO: Vapor, Badge, Booking, Línea y Fecha
+        d.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <b style="color: var(--azul);">${v_vapor}</b><br>
+                    <small class="text-dark fw-bold">BK: ${v_booking}</small><br>
+                    <small class="text-muted">${v_linea} | Creación: ${v_fecha}</small>
+                </div>
+                <span class="badge ${full ? 'bg-success' : 'bg-primary'} shadow-sm">
+                    ${v_registrados}/${v_cantidad}
+                </span>
+            </div>`;
+
+        d.onclick = () => { 
+            if(!full){ 
+                document.getElementById('idSel').value = p.id; 
+                actualizarBannerRegistro(p);
+                showStep(3); 
+            } else {
+                alert("Este pedido ya está completo.");
+            }
+        };
+        l.appendChild(d);
+    });
+}
 
     function actualizarBannerRegistro(pManual) {
         const id = document.getElementById('idSel').value;
