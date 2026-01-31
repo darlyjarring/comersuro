@@ -24,11 +24,11 @@
 <div class="container-fluid">
     <div class="row align-items-center mb-4">
         <div class="col-md-6">
-            <h3 class="fw-bold m-0" style="color: var(--azul)">📊 CONSULTA SEMANA ${5}</h3>
+            <h3 class="fw-bold m-0" style="color: var(--azul)">📊 REPORTE LOGÍSTICO SEMANAL</h3>
         </div>
         <div class="col-md-6 d-flex justify-content-md-end gap-2 mt-3 mt-md-0">
             <input type="number" id="inputSemana" class="form-control" placeholder="Semana (ej: 5)" style="width: 150px;">
-            <button onclick="consultar()" class="btn btn-primary px-4 fw-bold">CONSULTAR</button>
+            <button onclick="consultar()" class="btn btn-primary px-4 fw-bold shadow-sm">CONSULTAR</button>
         </div>
     </div>
 
@@ -62,16 +62,16 @@
     <div class="row g-4">
         <div class="col-lg-4">
             <div class="chart-container">
-                <h6 class="fw-bold border-bottom pb-2 mb-3">TRANSPORTISTAS</h6>
+                <h6 class="fw-bold border-bottom pb-2 mb-3 text-secondary">CONTEO POR TRANSPORTISTA</h6>
                 <canvas id="graficoTransp" style="max-height: 250px;"></canvas>
                 <div id="desglose" class="mt-4 small"></div>
             </div>
         </div>
 
         <div class="col-lg-8">
-            <div class="table-resumen">
-                <h6 class="fw-bold border-bottom pb-2 mb-3">DETALLE SEMANAL</h6>
-                <div class="table-responsive" style="max-height: 500px;">
+            <div class="table-resumen h-100">
+                <h6 class="fw-bold border-bottom pb-2 mb-3 text-secondary">DETALLE SEMANAL</h6>
+                <div class="table-responsive" style="max-height: 550px;">
                     <table class="table table-hover align-middle">
                         <thead class="sticky-top">
                             <tr>
@@ -84,7 +84,7 @@
                             </tr>
                         </thead>
                         <tbody id="tablaCuerpo" class="small">
-                            <tr><td colspan="6" class="text-center text-muted">Ingrese una semana</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted">Ingrese una semana para iniciar la consulta</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -94,26 +94,30 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; // REEMPLAZA ESTO CON TU URL DE IMPLEMENTACIÓN
     let baseDeDatos = null;
     let miGrafico = null;
 
+    // Cargar datos al abrir
     async function cargarBD() {
         try {
             const res = await fetch(SCRIPT_URL);
             baseDeDatos = await res.json();
-        } catch(e) { console.error("Error carga"); }
+            console.log("Base de datos sincronizada");
+        } catch(e) {
+            console.error("Error de conexión:", e);
+        }
     }
 
     function consultar() {
         const valInput = document.getElementById('inputSemana').value;
-        if(!valInput || !baseDeDatos) return alert("Ingrese un número.");
+        if(!valInput || !baseDeDatos) return alert("Por favor, ingrese un número de semana.");
 
         const numBuscado = parseInt(valInput, 10);
 
-        // FILTRO DE SEGURIDAD PARA EVITAR EL ERROR DE 'UNDEFINED'
+        // FILTRO DE SEGURIDAD: Evita errores si hay filas vacías en el Excel
         const idsFiltrados = baseDeDatos.pedidos.filter(p => {
-            // Verificamos que la semana exista en la fila antes de procesar
+            // Verificamos que 'p.semana' tenga datos antes de intentar convertirlo
             if (p.semana !== undefined && p.semana !== null && p.semana !== "") {
                 return parseInt(p.semana, 10) === numBuscado;
             }
@@ -123,7 +127,7 @@
         const detallesFiltrados = baseDeDatos.detalles.filter(d => idsFiltrados.includes(d.idPedido));
 
         if(detallesFiltrados.length === 0) {
-            alert("Sin datos para la semana " + numBuscado);
+            alert("No hay registros para la semana " + numBuscado);
             return;
         }
 
@@ -131,11 +135,13 @@
     }
 
     function actualizarPantalla(sem, datos) {
+        // Actualizar KPIs
         document.getElementById('kpiSem').innerText = sem;
         document.getElementById('kpiTotal').innerText = datos.length;
         document.getElementById('kpiCampo').innerText = datos.filter(d => d.blasti.toLowerCase() === 'campo').length;
         document.getElementById('kpiBlasti').innerText = datos.filter(d => d.blasti.toLowerCase() === 'blasti').length;
 
+        // Limpiar y llenar tabla
         const cuerpo = document.getElementById('tablaCuerpo');
         cuerpo.innerHTML = "";
         datos.forEach(d => {
@@ -171,17 +177,21 @@
                 labels: Object.keys(conteo),
                 datasets: [{
                     data: Object.values(conteo),
-                    backgroundColor: ['#004a87', '#28a745', '#ef6c00', '#6f42c1', '#dc3545']
+                    backgroundColor: ['#004a87', '#28a745', '#ef6c00', '#6f42c1', '#dc3545', '#343a40']
                 }]
             },
-            options: { plugins: { legend: { position: 'bottom' } } }
+            options: { 
+                plugins: { legend: { position: 'bottom' } },
+                cutout: '60%'
+            }
         });
 
-        let html = "<div class='fw-bold border-bottom mb-2'>DESGLOSE POR LÍNEA:</div>";
+        // Generar desglose de texto
+        let html = "<div class='fw-bold border-bottom mb-2 text-dark'>DESGLOSE POR LÍNEAS:</div>";
         for(let t in desgloseLin) {
-            html += `<div class='text-primary fw-bold mt-2'>${t}</div>`;
+            html += `<div class='text-primary fw-bold mt-2'>${t} (${conteo[t]})</div>`;
             for(let l in desgloseLin[t]) {
-                html += `<div class='ms-3 text-muted'>• ${l}: ${desgloseLin[t][l]}</div>`;
+                html += `<div class='ms-3 text-muted'>• ${l}: ${desgloseLin[t][l]} cont.</div>`;
             }
         }
         document.getElementById('desglose').innerHTML = html;
