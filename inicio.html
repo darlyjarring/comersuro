@@ -84,7 +84,7 @@
                             </tr>
                         </thead>
                         <tbody id="tablaCuerpo" class="small">
-                            <tr><td colspan="6" class="text-center text-muted">Ingrese una semana para iniciar la consulta</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted">Ingrese una semana para iniciar</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -94,40 +94,41 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; // REEMPLAZA ESTO CON TU URL DE IMPLEMENTACIÓN
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; // REEMPLAZAR CON TU URL REAL
     let baseDeDatos = null;
     let miGrafico = null;
 
-    // Cargar datos al abrir
     async function cargarBD() {
         try {
             const res = await fetch(SCRIPT_URL);
             baseDeDatos = await res.json();
-            console.log("Base de datos sincronizada");
-        } catch(e) {
-            console.error("Error de conexión:", e);
-        }
+            console.log("Datos listos.");
+        } catch(e) { console.error("Error cargando BD", e); }
     }
 
     function consultar() {
         const valInput = document.getElementById('inputSemana').value;
-        if(!valInput || !baseDeDatos) return alert("Por favor, ingrese un número de semana.");
+        if(!valInput || !baseDeDatos) return alert("Ingrese un número.");
 
         const numBuscado = parseInt(valInput, 10);
 
-        // FILTRO DE SEGURIDAD: Evita errores si hay filas vacías en el Excel
+        // BUSCAR IDs DE PEDIDOS POR SEMANA (Seguro contra celdas vacías)
         const idsFiltrados = baseDeDatos.pedidos.filter(p => {
-            // Verificamos que 'p.semana' tenga datos antes de intentar convertirlo
             if (p.semana !== undefined && p.semana !== null && p.semana !== "") {
                 return parseInt(p.semana, 10) === numBuscado;
             }
             return false;
         }).map(p => p.id);
 
-        const detallesFiltrados = baseDeDatos.detalles.filter(d => idsFiltrados.includes(d.idPedido));
+        // FILTRAR CONTENEDORES
+        const detallesFiltrados = baseDeDatos.detalles.filter(d => {
+            // Buscamos coincidencia en idPedido (o idpedido en minúsculas)
+            let idD = d.idPedido || d.idpedido;
+            return idsFiltrados.includes(idD);
+        });
 
         if(detallesFiltrados.length === 0) {
-            alert("No hay registros para la semana " + numBuscado);
+            alert("No hay registros.");
             return;
         }
 
@@ -135,24 +136,31 @@
     }
 
     function actualizarPantalla(sem, datos) {
-        // Actualizar KPIs
         document.getElementById('kpiSem').innerText = sem;
         document.getElementById('kpiTotal').innerText = datos.length;
-        document.getElementById('kpiCampo').innerText = datos.filter(d => d.blasti.toLowerCase() === 'campo').length;
-        document.getElementById('kpiBlasti').innerText = datos.filter(d => d.blasti.toLowerCase() === 'blasti').length;
+        
+        // Conteo seguro de estados
+        const totalCampo = datos.filter(d => (d.blasti || "").toLowerCase() === 'campo').length;
+        const totalBlasti = datos.filter(d => (d.blasti || "").toLowerCase() === 'blasti').length;
 
-        // Limpiar y llenar tabla
+        document.getElementById('kpiCampo').innerText = totalCampo;
+        document.getElementById('kpiBlasti').innerText = totalBlasti;
+
         const cuerpo = document.getElementById('tablaCuerpo');
         cuerpo.innerHTML = "";
+        
         datos.forEach(d => {
+            const estadoStr = (d.blasti || "PENDIENTE").toUpperCase();
+            const badge = estadoStr === 'CAMPO' ? 'badge-campo' : 'badge-blasti';
+
             cuerpo.innerHTML += `
                 <tr>
-                    <td class="fw-bold text-primary">${d.booking}</td>
-                    <td>${d.transp}</td>
-                    <td>${d.vapor}<br><small class="text-muted">${d.linea}</small></td>
-                    <td>${d.contenedor}</td>
+                    <td class="fw-bold text-primary">${d.booking || '---'}</td>
+                    <td>${d.transp || '---'}</td>
+                    <td>${d.vapor || '---'}<br><small class="text-muted">${d.linea || '---'}</small></td>
+                    <td>${d.contenedor || '---'}</td>
                     <td>${d.ventolera || '---'}</td>
-                    <td><span class="${d.blasti.toLowerCase() === 'campo' ? 'badge-campo' : 'badge-blasti'}">${d.blasti.toUpperCase()}</span></td>
+                    <td><span class="${badge}">${estadoStr}</span></td>
                 </tr>`;
         });
 
@@ -164,9 +172,11 @@
         const desgloseLin = {}; 
 
         datos.forEach(d => {
-            conteo[d.transp] = (conteo[d.transp] || 0) + 1;
-            if(!desgloseLin[d.transp]) desgloseLin[d.transp] = {};
-            desgloseLin[d.transp][d.linea] = (desgloseLin[d.transp][d.linea] || 0) + 1;
+            const t = d.transp || "S/ASIGNAR";
+            const l = d.linea || "S/LINEA";
+            conteo[t] = (conteo[t] || 0) + 1;
+            if(!desgloseLin[t]) desgloseLin[t] = {};
+            desgloseLin[t][l] = (desgloseLin[t][l] || 0) + 1;
         });
 
         const ctx = document.getElementById('graficoTransp').getContext('2d');
@@ -180,18 +190,14 @@
                     backgroundColor: ['#004a87', '#28a745', '#ef6c00', '#6f42c1', '#dc3545', '#343a40']
                 }]
             },
-            options: { 
-                plugins: { legend: { position: 'bottom' } },
-                cutout: '60%'
-            }
+            options: { plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
         });
 
-        // Generar desglose de texto
-        let html = "<div class='fw-bold border-bottom mb-2 text-dark'>DESGLOSE POR LÍNEAS:</div>";
+        let html = "<div class='fw-bold border-bottom mb-2'>DESGLOSE POR LÍNEA:</div>";
         for(let t in desgloseLin) {
-            html += `<div class='text-primary fw-bold mt-2'>${t} (${conteo[t]})</div>`;
+            html += `<div class='text-primary fw-bold mt-2'>${t}</div>`;
             for(let l in desgloseLin[t]) {
-                html += `<div class='ms-3 text-muted'>• ${l}: ${desgloseLin[t][l]} cont.</div>`;
+                html += `<div class='ms-3 text-muted'>• ${l}: ${desgloseLin[t][l]}</div>`;
             }
         }
         document.getElementById('desglose').innerHTML = html;
