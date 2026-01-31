@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>comersuro - Gestión Logística Directa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        .p-nuevo { background: #fff3cd; border-left: 8px solid #ffc107; margin-bottom: 10px; cursor: pointer; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: 0.2s; }
+        .p-nuevo:hover { background: #ffeaa7; transform: scale(1.01); }
+        .p-completo { background: #d1e7dd; border-left: 8px solid #198754; margin-bottom: 10px; padding: 15px; border-radius: 8px; opacity: 0.8; cursor: not-allowed; }
+        .scroll { max-height: 550px; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 10px; background: #fff; }
+        .badge-progreso { background: #0078d4; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; }
+        .header-app { background: #004a87; color: white; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+<div class="header-app text-center">
+    <h2>Sistema de Gestión comersuro</h2>
+    <p class="mb-0">Control de Contenedores - Ecuador (GMT-5)</p>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card p-4 shadow-sm border-0">
+                <h5 class="text-primary mb-3">1. Registrar Nuevo Pedido</h5>
+                <label class="small fw-bold text-muted">Cantidad de Contenedores</label>
+                <input type="number" id="cant" class="form-control mb-3" placeholder="Ej: 5">
+                
+                <label class="small fw-bold text-muted">Fecha del Pedido</label>
+                <input type="date" id="fecha" class="form-control mb-3" onchange="calcSemana()">
+                
+                <label class="small fw-bold text-muted">Semana Calculada</label>
+                <input type="text" id="sem" class="form-control mb-4 bg-light" readonly>
+                
+                <button onclick="guardarPedido()" class="btn btn-primary w-100 fw-bold py-2">Generar Pedido</button>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-secondary mb-0">2. Pedidos Activos</h5>
+                <button onclick="cargarDatosIniciales()" class="btn btn-sm btn-outline-secondary">🔄 Refrescar</button>
+            </div>
+            <div id="lista" class="scroll shadow-sm">
+                <p class="text-center text-muted py-5">Cargando datos desde la nube...</p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card p-4 shadow-sm border-0 border-top border-success border-4">
+                <h5 class="text-success mb-3">3. Registro de Contenedor</h5>
+                <label class="small fw-bold text-muted">Pedido Seleccionado</label>
+                <input type="text" id="idSel" class="form-control mb-3 bg-light fw-bold text-center" readonly placeholder="Selecciona de la lista">
+                
+                <input type="text" id="cont" class="form-control mb-2" placeholder="Nº Contenedor (Ej: HLXU...)">
+                <input type="text" id="book" class="form-control mb-3" placeholder="Nº de Booking">
+                
+                <label class="small fw-bold text-muted">Transportista</label>
+                <select id="trans" class="form-select mb-4">
+                    <option value="TRANS 1">TRANS 1</option>
+                    <option value="TRANS 2">TRANS 2</option>
+                    <option value="TRANS 3">TRANS 3</option>
+                </select>
+                <button onclick="guardarDetalle()" class="btn btn-success w-100 fw-bold py-2">Finalizar Registro</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec";
+    let pedidos = [];
+
+    async function cargarDatosIniciales() {
+        const l = document.getElementById('lista');
+        l.innerHTML = "<p class='text-center py-5'>Cargando datos...</p>";
+        
+        try {
+            const response = await fetch(SCRIPT_URL);
+            const data = await response.json(); 
+            
+            // Tu archivo.gs devuelve {pedidos: [...], detalles: [...] }
+            // Extraemos solo la lista de pedidos para esta vista
+            pedidos = data.pedidos; 
+            render();
+            
+        } catch (e) {
+            console.error("Error detectado:", e);
+            l.innerHTML = `<div class='alert alert-danger small'>Error de Conexión. Revisa la consola.</div>`;
+        }
+    }
+
+    window.onload = cargarDatosIniciales;
+
+    function calcSemana() {
+        const val = document.getElementById('fecha').value;
+        if (!val) return;
+        const d = new Date(val);
+        d.setHours(0,0,0,0);
+        d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+        const sem = Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + 1) / 7);
+        document.getElementById('sem').value = sem;
+    }
+
+    function render() {
+        const l = document.getElementById('lista');
+        l.innerHTML = pedidos.length === 0 ? "<p class='text-center text-muted py-5'>No hay pedidos pendientes</p>" : "";
+        
+        pedidos.forEach(p => {
+            const d = document.createElement('div');
+            // Usamos nombres exactos de tu archivo.gs: registrados, cantidad, fechaP, semana
+            const reg = p.registrados || 0;
+            const cant = p.cantidad || 0;
+            const isDone = reg >= cant && cant > 0;
+            
+            d.className = isDone ? 'p-completo' : 'p-nuevo';
+            
+            d.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark">${p.id}</span>
+                    <span class="badge-progreso">${reg} / ${cant}</span>
+                </div>
+                <div class="small mt-1 text-muted">
+                    Fecha: ${p.fechaP || 'S/F'} | Sem: ${p.semana || '--'}
+                </div>
+                ${isDone ? '<div class="text-success small fw-bold mt-1">✓ TOTALMENTE COMPLETADO</div>' : ''}
+            `;
+
+            d.onclick = () => { 
+                if(!isDone) {
+                    document.getElementById('idSel').value = p.id;
+                } else {
+                    alert("⚠️ Este pedido ya está cerrado.");
+                }
+            };
+            l.appendChild(d);
+        });
+    }
+
+    async function guardarPedido() {
+        const fechaRaw = document.getElementById('fecha').value;
+        const cant = document.getElementById('cant').value;
+        const semVal = document.getElementById('sem').value;
+        if (!fechaRaw || !cant) return alert("Completa cantidad y fecha");
+
+        const partes = fechaRaw.split("-");
+        const fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`; 
+
+        const p = {
+            action: "nuevoPedido",
+            id: "P-" + Math.floor(Math.random()*9000+1000),
+            cantidad: parseInt(cant),
+            fecha: fechaFormateada, 
+            semana: semVal
+        };
+        
+        // OPTIMISMO VISUAL: Usamos los nombres correctos para que no salga S/F al crear
+        pedidos.unshift({
+            id: p.id,
+            cantidad: p.cantidad,
+            registrados: 0,
+            fechaP: fechaFormateada, 
+            semana: semVal
+        });
+        render();
+
+        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) });
+        
+        alert("¡Pedido " + p.id + " grabado!");
+        document.getElementById('cant').value = "";
+        document.getElementById('fecha').value = "";
+        document.getElementById('sem').value = "";
+    }
+
+    async function guardarDetalle() {
+        const id = document.getElementById('idSel').value;
+        const p = pedidos.find(x => x.id === id);
+        const btn = document.querySelector("button[onclick='guardarDetalle()']");
+        
+        if(!p) return alert("Selecciona un pedido");
+        if(p.registrados >= p.cantidad) return alert("¡Límite alcanzado!");
+
+        btn.disabled = true; 
+        btn.innerText = "Grabando...";
+
+        const d = {
+            action: "completarDetalle",
+            idPedido: id,
+            contenedor: document.getElementById('cont').value,
+            booking: document.getElementById('book').value,
+            transp: document.getElementById('trans').value // f[4] en .gs es transp
+        };
+
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) });
+            p.registrados++;
+            render();
+            alert("Registrado correctamente");
+            document.getElementById('cont').value = "";
+            document.getElementById('book').value = "";
+            document.getElementById('idSel').value = "";
+        } catch (e) {
+            alert("Error al guardar");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Finalizar Registro";
+        }
+    }
+</script>
+</body>
+</html>
