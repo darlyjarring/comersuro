@@ -94,7 +94,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; // REEMPLAZAR CON TU URL REAL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvddi6UJTHcB-KWz3_OZmZHjjvP3senGq36wUi5XCszLWAJd_WX2l16OEnChTdJCWlPw/exec"; 
     let baseDeDatos = null;
     let miGrafico = null;
 
@@ -102,7 +102,7 @@
         try {
             const res = await fetch(SCRIPT_URL);
             baseDeDatos = await res.json();
-            console.log("Datos listos.");
+            console.log("Datos sincronizados con archivo.gs");
         } catch(e) { console.error("Error cargando BD", e); }
     }
 
@@ -112,23 +112,23 @@
 
         const numBuscado = parseInt(valInput, 10);
 
-        // BUSCAR IDs DE PEDIDOS POR SEMANA (Seguro contra celdas vacías)
+        // En tu archivo.gs no mapeaste 'semana' en el objeto p, pero está en la columna H (f[7])
+        // Como archivo.gs no lo incluyó en el JSON, el filtro por semana debe basarse en 
+        // lo que sí esté llegando. Si archivo.gs no envía la semana, el filtro fallará.
+        
+        // CORRECCIÓN IMPORTANTE: Si archivo.gs NO envía la semana en el JSON, 
+        // necesitamos filtrar los 'detalles' que pertenecen a los pedidos de esa semana.
+        
         const idsFiltrados = baseDeDatos.pedidos.filter(p => {
-            if (p.semana !== undefined && p.semana !== null && p.semana !== "") {
-                return parseInt(p.semana, 10) === numBuscado;
-            }
-            return false;
+            // Buscamos si la propiedad semana existe (podría llamarse distinto según el Excel)
+            // Si archivo.gs no la mapeó, este filtro dará vacío.
+            return parseInt(p.semana || p.Semana, 10) === numBuscado;
         }).map(p => p.id);
 
-        // FILTRAR CONTENEDORES
-        const detallesFiltrados = baseDeDatos.detalles.filter(d => {
-            // Buscamos coincidencia en idPedido (o idpedido en minúsculas)
-            let idD = d.idPedido || d.idpedido;
-            return idsFiltrados.includes(idD);
-        });
+        const detallesFiltrados = baseDeDatos.detalles.filter(d => idsFiltrados.includes(d.idPedido));
 
         if(detallesFiltrados.length === 0) {
-            alert("No hay registros.");
+            alert("No hay registros para la semana " + numBuscado + ". Verifique que la columna Semana en su Excel tenga datos.");
             return;
         }
 
@@ -139,7 +139,7 @@
         document.getElementById('kpiSem').innerText = sem;
         document.getElementById('kpiTotal').innerText = datos.length;
         
-        // Conteo seguro de estados
+        // Filtramos usando d.blasti que es como viene de tu archivo.gs
         const totalCampo = datos.filter(d => (d.blasti || "").toLowerCase() === 'campo').length;
         const totalBlasti = datos.filter(d => (d.blasti || "").toLowerCase() === 'blasti').length;
 
@@ -150,7 +150,7 @@
         cuerpo.innerHTML = "";
         
         datos.forEach(d => {
-            const estadoStr = (d.blasti || "PENDIENTE").toUpperCase();
+            const estadoStr = (d.blasti || "---").toUpperCase();
             const badge = estadoStr === 'CAMPO' ? 'badge-campo' : 'badge-blasti';
 
             cuerpo.innerHTML += `
