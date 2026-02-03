@@ -2,83 +2,64 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Logístico Pro</title>
+    <title>Dashboard Logístico Compacto</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f7; margin: 0; padding: 20px; }
-        .container { max-width: 1300px; margin: auto; }
-        .header { background: linear-gradient(135deg, #003366 0%, #006699 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        body { font-family: 'Segoe UI', sans-serif; background: #eceff1; margin: 0; padding: 10px; font-size: 14px; }
+        .container { max-width: 1100px; margin: auto; }
+        .header { background: #263238; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; }
         
-        #inputSection { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); text-align: center; }
-        textarea { width: 100%; height: 180px; border: 2px dashed #006699; border-radius: 10px; padding: 15px; margin-bottom: 20px; font-size: 14px; }
-        .btn-main { background: #27ae60; color: white; border: none; padding: 18px 50px; font-size: 18px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #inputSection { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        textarea { width: 100%; height: 80px; border: 1px solid #90a4ae; border-radius: 5px; padding: 10px; margin-bottom: 10px; }
+        .btn-main { background: #00796b; color: white; border: none; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
-        #dashboardSection { display: none; animate: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #dashboardSection { display: none; }
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .kpi-card { background: white; padding: 10px; border-radius: 8px; text-align: center; border-left: 4px solid #00796b; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .kpi-card h3 { margin: 0; font-size: 11px; color: #546e7a; text-transform: uppercase; }
+        .kpi-card p { margin: 5px 0 0; font-size: 20px; font-weight: bold; color: #263238; }
 
-        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-        .kpi-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid #006699; }
-        .kpi-card h3 { margin: 0; color: #7f8c8d; font-size: 13px; }
-        .kpi-card p { margin: 10px 0 0; font-size: 30px; font-weight: bold; color: #2c3e50; }
-
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
-        .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); min-height: 400px; }
-        .full-width { grid-column: 1 / -1; }
-
-        .table-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background: #f8f9fa; color: #2c3e50; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; background: #e8f4fd; color: #006699; }
+        .charts-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .chart-box { background: white; padding: 10px; border-radius: 8px; height: 280px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         
-        .btn-reset { background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; margin-bottom: 20px; font-weight: bold; }
+        .table-container { background: white; padding: 15px; border-radius: 8px; height: 250px; overflow-y: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f5f7f9; position: sticky; top: 0; padding: 8px; font-size: 12px; border-bottom: 2px solid #cfd8dc; text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
+        
+        .btn-reset { background: #cfd8dc; color: #37474f; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; margin-bottom: 10px; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1>🚀 Dashboard de Análisis Logístico Avanzado</h1>
-        <p id="currentDate"></p>
-    </div>
+    <div class="header"><strong>PANEL DE CONTROL DE INSPECCIONES</strong></div>
 
     <div id="inputSection">
-        <h3>Panel de Carga de Datos</h3>
-        <p>Pega tus columnas de Excel aquí para procesar los indicadores:</p>
-        <textarea id="rawInput" placeholder="Pega los datos aquí..."></textarea>
-        <br>
-        <button class="btn-main" onclick="generarReporte()">PROCESAR Y ANALIZAR</button>
+        <textarea id="rawInput" placeholder="Pega los datos de Excel aquí..."></textarea>
+        <button class="btn-main" onclick="generarReporte()">GENERAR DASHBOARD</button>
     </div>
 
     <div id="dashboardSection">
-        <button class="btn-reset" onclick="reset()">← CARGAR NUEVOS DATOS</button>
+        <button class="btn-reset" onclick="reset()">← Cargar otros datos</button>
         
         <div class="kpi-row">
-            <div class="kpi-card"><h3>TOTAL CONTENEDORES</h3><p id="kpi-total">0</p></div>
-            <div class="kpi-card"><h3>TIEMPO PROMEDIO</h3><p id="kpi-avg">0:00</p></div>
-            <div class="kpi-card"><h3>DESTINO PRINCIPAL</h3><p id="kpi-top-dest">-</p></div>
-            <div class="kpi-card"><h3>EFICIENCIA SEMANAL</h3><p id="kpi-weeks">0</p></div>
+            <div class="kpi-card"><h3>Contenedores</h3><p id="kpi-total">0</p></div>
+            <div class="kpi-card"><h3>Promedio</h3><p id="kpi-avg">0:00</p></div>
+            <div class="kpi-card"><h3>Max Tiempo</h3><p id="kpi-max">0:00</p></div>
+            <div class="kpi-card"><h3>Top Destino</h3><p id="kpi-top">-</p></div>
         </div>
 
         <div class="charts-grid">
-            <div class="chart-box full-width">
-                <canvas id="lineTrendChart"></canvas>
-            </div>
-            <div class="chart-box">
-                <canvas id="barDestChart"></canvas>
-            </div>
-            <div class="chart-box">
-                <canvas id="pieTermChart"></canvas>
-            </div>
+            <div class="chart-box"><canvas id="lineChart"></canvas></div>
+            <div class="chart-box"><canvas id="barChart"></canvas></div>
+            <div class="chart-box"><canvas id="pieChart"></canvas></div>
         </div>
 
         <div class="table-container">
-            <h3>📂 Detalle de Operaciones Procesadas</h3>
-            <table id="mainTable">
+            <table>
                 <thead>
-                    <tr>
-                        <th>FECHA</th><th>CONTENEDOR</th><th>DURACIÓN</th><th>EXPORTADORA</th><th>DESTINO</th><th>TERMINAL</th>
-                    </tr>
+                    <tr><th>FECHA</th><th>CONTENEDOR</th><th>DURACIÓN</th><th>DESTINO</th><th>TERMINAL</th></tr>
                 </thead>
                 <tbody id="tableContent"></tbody>
             </table>
@@ -87,110 +68,81 @@
 </div>
 
 <script>
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
-    let charts = {};
+    let myCharts = {};
 
     function generarReporte() {
         const input = document.getElementById('rawInput').value.trim();
         if (!input) return;
 
         const rows = input.split('\n');
-        let data = [];
-        let totalMinutos = 0;
-        let dests = {}, terms = {}, dateTrend = {};
+        let data = [], totalMins = 0, maxMins = 0;
+        let dests = {}, terms = {}, trend = {};
 
         rows.forEach(row => {
             const c = row.split('\t');
-            if (c.length < 10) return;
+            if (c.length < 11) return;
 
-            const entry = {
-                fecha: c[0],
-                cont: c[2],
-                tiempo: c[5],
-                exp: c[6],
-                dest: c[9],
-                term: c[11]
-            };
+            // Limpieza de tiempo para evitar NaN
+            let tiempoStr = (c[5] || "0:00").trim();
+            let tParts = tiempoStr.split(':');
+            let mins = 0;
+            if(tParts.length === 2) {
+                mins = (parseInt(tParts[0]) || 0) * 60 + (parseInt(tParts[1]) || 0);
+            }
 
-            // Cálculo de Tiempos
-            const t = entry.tiempo.split(':');
-            const mins = (parseInt(t[0]) * 60) + parseInt(t[1]);
-            totalMinutos += mins;
+            totalMins += mins;
+            if(mins > maxMins) maxMins = mins;
 
-            // Tendencia por fecha
-            dateTrend[entry.fecha] = (dateTrend[entry.fecha] || 0) + mins;
-            
+            const entry = { fecha: c[0], cont: c[2], tiempo: tiempoStr, dest: c[9], term: c[11], mins: mins };
             dests[entry.dest] = (dests[entry.dest] || 0) + 1;
             terms[entry.term] = (terms[entry.term] || 0) + 1;
+            trend[entry.fecha] = (trend[entry.fecha] || 0) + mins;
             data.push(entry);
         });
+
+        if (data.length === 0) return alert("Error en el formato de datos.");
 
         document.getElementById('inputSection').style.display = 'none';
         document.getElementById('dashboardSection').style.display = 'block';
 
-        // Actualizar KPIs
+        // KPIs
         document.getElementById('kpi-total').innerText = data.length;
-        const avg = Math.round(totalMinutos / data.length);
+        let avg = Math.round(totalMins / data.length);
         document.getElementById('kpi-avg').innerText = `${Math.floor(avg/60)}h ${avg%60}m`;
-        document.getElementById('kpi-top-dest').innerText = Object.keys(dests).reduce((a, b) => dests[a] > dests[b] ? a : b);
-        document.getElementById('kpi-weeks').innerText = new Set(data.map(d => d.fecha)).size + " Días";
+        document.getElementById('kpi-max').innerText = `${Math.floor(maxMins/60)}h ${maxMins%60}m`;
+        document.getElementById('kpi-top').innerText = Object.keys(dests).reduce((a, b) => dests[a] > dests[b] ? a : b);
 
-        // Llenar Tabla
-        const tableBody = document.getElementById('tableContent');
-        tableBody.innerHTML = data.map(d => `<tr><td>${d.fecha}</td><td><b>${d.cont}</b></td><td><span class="badge">${d.tiempo}</span></td><td>${d.exp}</td><td>${d.dest}</td><td>${d.term}</td></tr>`).join('');
+        // Tabla
+        document.getElementById('tableContent').innerHTML = data.map(d => 
+            `<tr><td>${d.fecha}</td><td>${d.cont}</td><td><b>${d.tiempo}</b></td><td>${d.dest}</td><td>${d.term}</td></tr>`
+        ).join('');
 
-        renderizarGraficos(dests, terms, dateTrend);
+        render(dests, terms, trend);
     }
 
-    function renderizarGraficos(dests, terms, dateTrend) {
-        const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#e67e22'];
-        
-        // 1. Gráfico de Tendencia (Lineas)
-        if(charts.line) charts.line.destroy();
-        charts.line = new Chart(document.getElementById('lineTrendChart'), {
-            type: 'line',
-            data: {
-                labels: Object.keys(dateTrend),
-                datasets: [{
-                    label: 'Minutos de Inspección por Día',
-                    data: Object.values(dateTrend),
-                    borderColor: '#006699',
-                    backgroundColor: 'rgba(0, 102, 153, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: { plugins: { title: { display: true, text: 'TENDENCIA TEMPORAL DE CARGA' } } }
+    function render(dests, terms, trend) {
+        const colors = ['#00796b', '#c62828', '#1565c0', '#ef6c00', '#6a1b9a', '#2e7d32'];
+        const total = Object.values(terms).reduce((a,b)=>a+b,0);
+
+        if(myCharts.line) myCharts.line.destroy();
+        myCharts.line = new Chart(document.getElementById('lineChart'), {
+            type: 'line', data: { labels: Object.keys(trend), datasets: [{ label: 'Minutos/Día', data: Object.values(trend), borderColor: '#00796b', tension: 0.3, fill: true, backgroundColor: 'rgba(0,121,107,0.1)' }]},
+            options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'TENDENCIA DE TIEMPO' }}}
         });
 
-        // 2. Gráfico de Destinos (Barras con colores)
-        if(charts.bar) charts.bar.destroy();
-        charts.bar = new Chart(document.getElementById('barDestChart'), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(dests),
-                datasets: [{
-                    label: 'Cantidad',
-                    data: Object.values(dests),
-                    backgroundColor: colors
-                }]
-            },
-            options: { plugins: { title: { display: true, text: 'DISTRIBUCIÓN POR DESTINO' } } }
+        if(myCharts.bar) myCharts.bar.destroy();
+        myCharts.bar = new Chart(document.getElementById('barChart'), {
+            type: 'bar', data: { labels: Object.keys(dests), datasets: [{ label: 'Cant.', data: Object.values(dests), backgroundColor: colors }]},
+            options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'POR DESTINO' }}}
         });
 
-        // 3. Gráfico de Terminales (Dona con Porcentajes)
-        if(charts.pie) charts.pie.destroy();
-        const totalTerms = Object.values(terms).reduce((a,b) => a + b, 0);
-        charts.pie = new Chart(document.getElementById('pieTermChart'), {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(terms).map(t => `${t} (${Math.round((terms[t]/totalTerms)*100)}%)`),
-                datasets: [{
-                    data: Object.values(terms),
-                    backgroundColor: ['#1a237e', '#0d47a1', '#1976d2', '#2196f3', '#64b5f6']
-                }]
+        if(myCharts.pie) myCharts.pie.destroy();
+        myCharts.pie = new Chart(document.getElementById('pieChart'), {
+            type: 'doughnut', data: { 
+                labels: Object.keys(terms).map(k => `${k}: ${Math.round((terms[k]/total)*100)}%`), 
+                datasets: [{ data: Object.values(terms), backgroundColor: colors }]
             },
-            options: { plugins: { title: { display: true, text: 'PARTICIPACIÓN POR TERMINAL (%)' } } }
+            options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'TERMINALES (%)' }, legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }}} }}
         });
     }
 
