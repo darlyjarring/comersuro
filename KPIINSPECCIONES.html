@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard de Inspecciones</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 20px; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; text-align: center; }
+        textarea { width: 100%; height: 150px; padding: 10px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 15px; }
+        .kpi-container { display: flex; gap: 20px; justify-content: space-around; margin: 20px 0; }
+        .kpi-card { background: #2980b9; color: white; padding: 20px; border-radius: 8px; text-align: center; flex: 1; }
+        .kpi-card h3 { margin: 0; font-size: 14px; text-transform: uppercase; }
+        .kpi-card p { margin: 10px 0 0; font-size: 28px; font-weight: bold; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+        .chart-box { background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+        button { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
+        button:hover { background: #219150; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Dashboard Dinámico de Inspecciones</h2>
+    <p>Copia tus datos de Excel (desde Fecha hasta Tiempo) y pégalos aquí:</p>
+    <textarea id="dataInput" placeholder="Pega aquí las filas de tu Excel..."></textarea>
+    <button onclick="procesarDatos()">Generar Indicadores y Gráficos</button>
+
+    <div class="kpi-container">
+        <div class="kpi-card" style="background: #34495e;">
+            <h3>Total Contenedores</h3>
+            <p id="kpi-total">0</p>
+        </div>
+        <div class="kpi-card">
+            <h3>Tiempo Promedio Insp.</h3>
+            <p id="kpi-promedio">00:00</p>
+        </div>
+        <div class="kpi-card" style="background: #8e44ad;">
+            <h3>Eficiencia Logística</h3>
+            <p id="kpi-eficiencia">0%</p>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-box">
+            <canvas id="chartDestinos"></canvas>
+        </div>
+        <div class="chart-box">
+            <canvas id="chartTerminales"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    let chartD, chartT;
+
+    function procesarDatos() {
+        const input = document.getElementById('dataInput').value;
+        const filas = input.split('\n').filter(f => f.trim() !== "");
+        
+        let totalMinutos = 0;
+        let destinos = {};
+        let terminales = {};
+        let conteoRegistros = 0;
+
+        filas.forEach(fila => {
+            const columnas = fila.split('\t');
+            if (columnas.length >= 12) {
+                conteoRegistros++;
+                
+                // Procesar Tiempo (Columna L - Indice 11)
+                const tiempoStr = columnas[11];
+                if(tiempoStr.includes(':')) {
+                    const [h, m] = tiempoStr.split(':').map(Number);
+                    totalMinutos += (h * 60) + m;
+                }
+
+                // Procesar Destino (Columna I - Indice 8)
+                const dest = columnas[8].trim();
+                destinos[dest] = (destinos[dest] || 0) + 1;
+
+                // Procesar Terminal (Columna K - Indice 10)
+                const term = columnas[10].trim();
+                terminales[term] = (terminales[term] || 0) + 1;
+            }
+        });
+
+        // Actualizar KPIs
+        document.getElementById('kpi-total').innerText = conteoRegistros;
+        const avgMinutos = totalMinutos / conteoRegistros;
+        const h = Math.floor(avgMinutos / 60);
+        const m = Math.round(avgMinutos % 60);
+        document.getElementById('kpi-promedio').innerText = `${h}:${m.toString().padStart(2, '0')}`;
+        document.getElementById('kpi-eficiencia').innerText = (100 - (avgMinutos/2)).toFixed(1) + "%";
+
+        actualizarGraficos(destinos, terminales);
+    }
+
+    function actualizarGraficos(destData, termData) {
+        if (chartD) chartD.destroy();
+        if (chartT) chartT.destroy();
+
+        const ctxD = document.getElementById('chartDestinos').getContext('2d');
+        chartD = new Chart(ctxD, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(destData),
+                datasets: [{ label: 'Inspecciones por Destino', data: Object.values(destData), backgroundColor: '#3498db' }]
+            }
+        });
+
+        const ctxT = document.getElementById('chartTerminales').getContext('2d');
+        chartT = new Chart(ctxT, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(termData),
+                datasets: [{ data: Object.values(termData), backgroundColor: ['#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6', '#1abc9c'] }]
+            },
+            options: { plugins: { title: { display: true, text: 'Distribución por Terminal' } } }
+        });
+    }
+</script>
+</body>
+</html>
