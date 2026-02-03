@@ -2,148 +2,203 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Comersur - Reporte en Horas</title>
+    <title>Dashboard Logístico Compacto - Horas</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 15px; }
-        .container { max-width: 1200px; margin: auto; }
-        .header { background: #1a237e; color: white; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
-        #inputSection { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
-        textarea { width: 100%; height: 80px; border: 1px solid #1a237e; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
-        .btn-main { background: #2e7d32; color: white; border: none; padding: 12px 40px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eceff1; margin: 0; padding: 10px; font-size: 14px; }
+        .container { max-width: 1100px; margin: auto; }
+        .header { background: #263238; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; }
+        
+        #inputSection { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        textarea { width: 100%; height: 80px; border: 1px solid #90a4ae; border-radius: 5px; padding: 10px; margin-bottom: 10px; }
+        .btn-main { background: #00796b; color: white; border: none; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
         #dashboardSection { display: none; }
-        .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
-        .kpi-card { background: white; padding: 15px; border-radius: 8px; text-align: center; border-top: 5px solid #1a237e; }
-        .kpi-card p { margin: 8px 0 0; font-size: 28px; font-weight: bold; color: #1a237e; }
-        .charts-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .chart-box { background: white; padding: 15px; border-radius: 8px; height: 350px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .table-container { background: white; padding: 15px; border-radius: 8px; max-height: 250px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #f1f3f4; position: sticky; top: 0; padding: 10px; text-align: left; }
-        td { padding: 8px; border-bottom: 1px solid #eee; }
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .kpi-card { background: white; padding: 10px; border-radius: 8px; text-align: center; border-left: 4px solid #00796b; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .kpi-card h3 { margin: 0; font-size: 11px; color: #546e7a; text-transform: uppercase; }
+        .kpi-card p { margin: 5px 0 0; font-size: 20px; font-weight: bold; color: #263238; }
+
+        .charts-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .chart-box { background: white; padding: 10px; border-radius: 8px; height: 280px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        .table-container { background: white; padding: 15px; border-radius: 8px; height: 250px; overflow-y: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f5f7f9; position: sticky; top: 0; padding: 8px; font-size: 12px; border-bottom: 2px solid #cfd8dc; text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
+        
+        .btn-reset { background: #cfd8dc; color: #37474f; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; margin-bottom: 10px; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header"><h1>📊 DASHBOARD DE INSPECCIONES (FORMATO HORAS)</h1></div>
+    <div class="header"><strong>PANEL DE CONTROL DE INSPECCIONES - FORMATO HORAS</strong></div>
 
     <div id="inputSection">
-        <textarea id="rawInput" placeholder="Pega tus datos de Excel aquí..."></textarea>
-        <button class="btn-main" onclick="generar()">ACTUALIZAR REPORTES</button>
+        <textarea id="rawInput" placeholder="Pega los datos de Excel aquí..."></textarea>
+        <button class="btn-main" onclick="generarReporte()">GENERAR DASHBOARD</button>
     </div>
 
     <div id="dashboardSection">
+        <button class="btn-reset" onclick="reset()">← Cargar otros datos</button>
+        
         <div class="kpi-row">
-            <div class="kpi-card"><h3>TOTAL CONTENEDORES</h3><p id="k-total">0</p></div>
-            <div class="kpi-card"><h3>TIEMPO PROMEDIO</h3><p id="k-avg">0:00</p></div>
-            <div class="kpi-card"><h3>TIEMPO TOTAL PERIODO</h3><p id="k-sum">0:00</p></div>
+            <div class="kpi-card"><h3>Contenedores</h3><p id="kpi-total">0</p></div>
+            <div class="kpi-card"><h3>Promedio</h3><p id="kpi-avg">0:00</p></div>
+            <div class="kpi-card"><h3>Max Tiempo</h3><p id="kpi-max">0:00</p></div>
+            <div class="kpi-card"><h3>Top Destino</h3><p id="kpi-top">-</p></div>
         </div>
 
         <div class="charts-grid">
             <div class="chart-box"><canvas id="lineChart"></canvas></div>
+            <div class="chart-box"><canvas id="barChart"></canvas></div>
             <div class="chart-box"><canvas id="pieChart"></canvas></div>
         </div>
 
         <div class="table-container">
-            <table id="dataTable">
+            <table>
                 <thead>
                     <tr><th>FECHA</th><th>CONTENEDOR</th><th>DURACIÓN</th><th>DESTINO</th><th>TERMINAL</th></tr>
                 </thead>
-                <tbody id="tableBody"></tbody>
+                <tbody id="tableContent"></tbody>
             </table>
         </div>
     </div>
 </div>
 
 <script>
-    let charts = {};
+    let myCharts = {};
 
-    function generar() {
+    function generarReporte() {
         const input = document.getElementById('rawInput').value.trim();
         if (!input) return;
 
         const rows = input.split('\n');
-        let data = [], totalMins = 0;
-        let terms = {}, trend = {};
+        let data = [], totalMins = 0, maxMins = 0;
+        let dests = {}, terms = {}, trendMins = {}, trendCount = {};
 
         rows.forEach(row => {
             const c = row.split('\t');
             if (c.length < 11) return;
 
-            // Extraer tiempo de la columna F (índice 5)
-            let tParts = c[5].trim().split(':');
-            let mins = (parseInt(tParts[0]) || 0) * 60 + (parseInt(tParts[1]) || 0);
+            // Limpieza de tiempo para evitar NaN
+            let tiempoStr = (c[5] || "0:00").trim();
+            let tParts = tiempoStr.split(':');
+            let mins = 0;
+            if(tParts.length >= 2) {
+                mins = (parseInt(tParts[0]) || 0) * 60 + (parseInt(tParts[1]) || 0);
+            }
+
             totalMins += mins;
+            if(mins > maxMins) maxMins = mins;
 
-            const fecha = c[0];
-            trend[fecha] = (trend[fecha] || 0) + mins;
-            terms[c[11]] = (terms[c[11]] || 0) + 1;
-
-            data.push({ fecha, cont: c[2], tiempo: c[5], dest: c[9], term: c[11] });
+            const entry = { fecha: c[0], cont: c[2], tiempo: tiempoStr, dest: c[9], term: c[11], mins: mins };
+            
+            dests[entry.dest] = (dests[entry.dest] || 0) + 1;
+            terms[entry.term] = (terms[entry.term] || 0) + 1;
+            
+            // Agrupación por día para el gráfico de líneas
+            trendMins[entry.fecha] = (trendMins[entry.fecha] || 0) + mins;
+            trendCount[entry.fecha] = (trendCount[entry.fecha] || 0) + 1;
+            
+            data.push(entry);
         });
+
+        if (data.length === 0) return alert("Error en el formato de datos.");
 
         document.getElementById('inputSection').style.display = 'none';
         document.getElementById('dashboardSection').style.display = 'block';
 
-        // Llenar KPIs
-        document.getElementById('k-total').innerText = data.length;
+        // KPIs
+        document.getElementById('kpi-total').innerText = data.length;
         let avg = Math.round(totalMins / data.length);
-        document.getElementById('k-avg').innerText = `${Math.floor(avg/60)}h ${avg%60}m`;
-        document.getElementById('k-sum').innerText = `${Math.floor(totalMins/60)}h ${totalMins%60}m`;
+        document.getElementById('kpi-avg').innerText = `${Math.floor(avg/60)}h ${avg%60}m`;
+        document.getElementById('kpi-max').innerText = `${Math.floor(maxMins/60)}h ${maxMins%60}m`;
+        document.getElementById('kpi-top').innerText = Object.keys(dests).reduce((a, b) => dests[a] > dests[b] ? a : b);
 
         // Tabla
-        document.getElementById('tableBody').innerHTML = data.map(d => 
+        document.getElementById('tableContent').innerHTML = data.map(d => 
             `<tr><td>${d.fecha}</td><td>${d.cont}</td><td><b>${d.tiempo}</b></td><td>${d.dest}</td><td>${d.term}</td></tr>`
         ).join('');
 
-        render(trend, terms);
+        render(dests, terms, trendMins, trendCount);
     }
 
-    function render(trend, terms) {
-        // Convertir minutos de tendencia a horas decimales para el gráfico
-        const labels = Object.keys(trend);
-        const valuesInHours = Object.values(trend).map(m => (m / 60).toFixed(2));
+    function render(dests, terms, trendMins, trendCount) {
+        const colors = ['#00796b', '#c62828', '#1565c0', '#ef6c00', '#6a1b9a', '#2e7d32'];
+        const totalItems = Object.values(terms).reduce((a,b)=>a+b,0);
+        
+        // Conversión de minutos a horas para el eje Y
+        const labels = Object.keys(trendMins);
+        const hoursData = Object.values(trendMins).map(m => (m / 60).toFixed(2));
+        const countsData = Object.values(trendCount);
 
-        if(charts.line) charts.line.destroy();
-        charts.line = new Chart(document.getElementById('lineChart'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Horas de Inspección',
-                    data: valuesInHours,
-                    borderColor: '#1a237e',
-                    backgroundColor: 'rgba(26,35,126,0.1)',
-                    fill: true,
-                    tension: 0.3
+        // GRAFICO DE LINEAS (AHORA EN HORAS + CANTIDAD)
+        if(myCharts.line) myCharts.line.destroy();
+        myCharts.line = new Chart(document.getElementById('lineChart'), {
+            type: 'line', 
+            data: { 
+                labels: labels, 
+                datasets: [{ 
+                    label: 'Horas Totales', 
+                    data: hoursData, 
+                    borderColor: '#00796b', 
+                    tension: 0.3, 
+                    fill: true, 
+                    backgroundColor: 'rgba(0,121,107,0.1)',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
                 }]
             },
-            options: {
-                maintainAspectRatio: false,
+            options: { 
+                maintainAspectRatio: false, 
                 scales: {
                     y: {
                         ticks: { callback: function(value) { return value + 'h'; } },
-                        title: { display: true, text: 'Horas Totales del Día' }
+                        title: { display: true, text: 'Duración (Horas)' }
                     }
                 },
-                plugins: { title: { display: true, text: 'CARGA DE TRABAJO DIARIA (HORAS)' } }
+                plugins: { 
+                    title: { display: true, text: 'TENDENCIA DIARIA (HORAS)' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                let index = context.dataIndex;
+                                return [
+                                    label + ': ' + context.parsed.y + ' h',
+                                    'Inspecciones: ' + countsData[index]
+                                ];
+                            }
+                        }
+                    }
+                }
             }
         });
 
-        if(charts.pie) charts.pie.destroy();
-        const total = Object.values(terms).reduce((a,b)=>a+b,0);
-        charts.pie = new Chart(document.getElementById('pieChart'), {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(terms).map(k => `${k}: ${Math.round((terms[k]/total)*100)}%`),
-                datasets: [{ data: Object.values(terms), backgroundColor: ['#1a237e', '#c62828', '#2e7d32', '#fbc02d'] }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'PARTICIPACIÓN TERMINAL (%)' } }
-            }
+        // GRAFICO DE BARRAS
+        if(myCharts.bar) myCharts.bar.destroy();
+        myCharts.bar = new Chart(document.getElementById('barChart'), {
+            type: 'bar', data: { labels: Object.keys(dests), datasets: [{ label: 'Cant.', data: Object.values(dests), backgroundColor: colors }]},
+            options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'POR DESTINO' }}}
         });
+
+        // GRAFICO DE DONA (CON %)
+        if(myCharts.pie) myCharts.pie.destroy();
+        myCharts.pie = new Chart(document.getElementById('pieChart'), {
+            type: 'doughnut', data: { 
+                labels: Object.keys(terms).map(k => `${k}: ${Math.round((terms[k]/totalItems)*100)}%`), 
+                datasets: [{ data: Object.values(terms), backgroundColor: colors }]
+            },
+            options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'TERMINALES (%)' }, legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }}} }}
+        });
+    }
+
+    function reset() {
+        document.getElementById('inputSection').style.display = 'block';
+        document.getElementById('dashboardSection').style.display = 'none';
+        document.getElementById('rawInput').value = "";
     }
 </script>
 </body>
