@@ -2,124 +2,139 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard de Inspecciones</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Logístico - Inspecciones</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 20px; }
-        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #2c3e50; text-align: center; }
-        textarea { width: 100%; height: 150px; padding: 10px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 15px; }
-        .kpi-container { display: flex; gap: 20px; justify-content: space-around; margin: 20px 0; }
-        .kpi-card { background: #2980b9; color: white; padding: 20px; border-radius: 8px; text-align: center; flex: 1; }
-        .kpi-card h3 { margin: 0; font-size: 14px; text-transform: uppercase; }
-        .kpi-card p { margin: 10px 0 0; font-size: 28px; font-weight: bold; }
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
-        .chart-box { background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
-        button { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
-        button:hover { background: #219150; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; }
+        .header { background: #1a237e; color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
+        .input-area { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        textarea { width: 100%; height: 120px; border: 1px solid #ccc; border-radius: 5px; padding: 10px; font-family: monospace; box-sizing: border-box; }
+        .btn { background: #2e7d32; color: white; border: none; padding: 15px; width: 100%; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; font-weight: bold; }
+        .btn:hover { background: #1b5e20; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card h3 { margin: 0; color: #555; font-size: 14px; text-transform: uppercase; }
+        .card .value { font-size: 32px; font-weight: bold; color: #1a237e; margin-top: 10px; }
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
+        .chart-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Dashboard Dinámico de Inspecciones</h2>
-    <p>Copia tus datos de Excel (desde Fecha hasta Tiempo) y pégalos aquí:</p>
-    <textarea id="dataInput" placeholder="Pega aquí las filas de tu Excel..."></textarea>
-    <button onclick="procesarDatos()">Generar Indicadores y Gráficos</button>
+    <div class="header">
+        <h1>📊 Dashboard Dinámico de Inspecciones</h1>
+    </div>
 
-    <div class="kpi-container">
-        <div class="kpi-card" style="background: #34495e;">
+    <div class="input-area">
+        <h3>Pega tus datos de Excel aquí:</h3>
+        <textarea id="excelData" placeholder="03/01/2026	3/1/2026 12:15	CXRU1013456..."></textarea>
+        <button class="btn" onclick="procesar()">ACTUALIZAR DASHBOARD</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card">
             <h3>Total Contenedores</h3>
-            <p id="kpi-total">0</p>
+            <div id="val-total" class="value">0</div>
         </div>
-        <div class="kpi-card">
-            <h3>Tiempo Promedio Insp.</h3>
-            <p id="kpi-promedio">00:00</p>
+        <div class="card">
+            <h3>Tiempo Promedio</h3>
+            <div id="val-promedio" class="value">0:00</div>
         </div>
-        <div class="kpi-card" style="background: #8e44ad;">
-            <h3>Eficiencia Logística</h3>
-            <p id="kpi-eficiencia">0%</p>
+        <div class="card">
+            <h3>Eficiencia de Tiempo</h3>
+            <div id="val-max" class="value">0:00</div>
+            <small>Máxima duración detectada</small>
         </div>
     </div>
 
-    <div class="charts-grid">
-        <div class="chart-box">
-            <canvas id="chartDestinos"></canvas>
+    <div class="charts-container">
+        <div class="chart-card">
+            <canvas id="chartDestino"></canvas>
         </div>
-        <div class="chart-box">
-            <canvas id="chartTerminales"></canvas>
+        <div class="chart-card">
+            <canvas id="chartTerminal"></canvas>
         </div>
     </div>
 </div>
 
 <script>
-    let chartD, chartT;
+    let chart1, chart2;
 
-    function procesarDatos() {
-        const input = document.getElementById('dataInput').value;
-        const filas = input.split('\n').filter(f => f.trim() !== "");
+    function procesar() {
+        const text = document.getElementById('excelData').value;
+        const filas = text.trim().split('\n');
         
+        let totalContenedores = filas.length;
         let totalMinutos = 0;
+        let maxMinutos = 0;
         let destinos = {};
         let terminales = {};
-        let conteoRegistros = 0;
 
         filas.forEach(fila => {
-            const columnas = fila.split('\t');
-            if (columnas.length >= 12) {
-                conteoRegistros++;
-                
-                // Procesar Tiempo (Columna L - Indice 11)
-                const tiempoStr = columnas[11];
-                if(tiempoStr.includes(':')) {
-                    const [h, m] = tiempoStr.split(':').map(Number);
-                    totalMinutos += (h * 60) + m;
-                }
+            const cols = fila.split('\t');
+            if(cols.length < 12) return;
 
-                // Procesar Destino (Columna I - Indice 8)
-                const dest = columnas[8].trim();
-                destinos[dest] = (destinos[dest] || 0) + 1;
+            // Procesar Tiempo (Columna 6: INDEX 5)
+            const tiempoRaw = cols[5].split(':');
+            const mins = (parseInt(tiempoRaw[0]) * 60) + parseInt(tiempoRaw[1]);
+            totalMinutos += mins;
+            if(mins > maxMinutos) maxMinutos = mins;
 
-                // Procesar Terminal (Columna K - Indice 10)
-                const term = columnas[10].trim();
-                terminales[term] = (terminales[term] || 0) + 1;
-            }
+            // Destinos (Columna 10: INDEX 9)
+            const dest = cols[9].trim();
+            destinos[dest] = (destinos[dest] || 0) + 1;
+
+            // Terminales (Columna 12: INDEX 11)
+            const term = cols[11].trim();
+            terminales[term] = (terminales[term] || 0) + 1;
         });
 
-        // Actualizar KPIs
-        document.getElementById('kpi-total').innerText = conteoRegistros;
-        const avgMinutos = totalMinutos / conteoRegistros;
-        const h = Math.floor(avgMinutos / 60);
-        const m = Math.round(avgMinutos % 60);
-        document.getElementById('kpi-promedio').innerText = `${h}:${m.toString().padStart(2, '0')}`;
-        document.getElementById('kpi-eficiencia').innerText = (100 - (avgMinutos/2)).toFixed(1) + "%";
+        // Cálculos de KPIs
+        const avgMins = Math.round(totalMinutos / totalContenedores);
+        
+        document.getElementById('val-total').innerText = totalContenedores;
+        document.getElementById('val-promedio').innerText = `${Math.floor(avgMins/60)}:${(avgMins%60).toString().padStart(2,'0')}`;
+        document.getElementById('val-max').innerText = `${Math.floor(maxMinutos/60)}:${(maxMinutos%60).toString().padStart(2,'0')}`;
 
-        actualizarGraficos(destinos, terminales);
+        renderCharts(destinos, terminales);
     }
 
-    function actualizarGraficos(destData, termData) {
-        if (chartD) chartD.destroy();
-        if (chartT) chartT.destroy();
+    function renderCharts(destData, termData) {
+        if(chart1) chart1.destroy();
+        if(chart2) chart2.destroy();
 
-        const ctxD = document.getElementById('chartDestinos').getContext('2d');
-        chartD = new Chart(ctxD, {
+        // Gráfico Destinos
+        chart1 = new Chart(document.getElementById('chartDestino'), {
             type: 'bar',
             data: {
                 labels: Object.keys(destData),
-                datasets: [{ label: 'Inspecciones por Destino', data: Object.values(destData), backgroundColor: '#3498db' }]
-            }
+                datasets: [{
+                    label: 'Contenedores por Destino',
+                    data: Object.values(destData),
+                    backgroundColor: '#3f51b5'
+                }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'INSPS. POR DESTINO' } } }
         });
 
-        const ctxT = document.getElementById('chartTerminales').getContext('2d');
-        chartT = new Chart(ctxT, {
+        // Gráfico Terminales
+        chart2 = new Chart(document.getElementById('chartTerminal'), {
             type: 'doughnut',
             data: {
                 labels: Object.keys(termData),
-                datasets: [{ data: Object.values(termData), backgroundColor: ['#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6', '#1abc9c'] }]
+                datasets: [{
+                    data: Object.values(termData),
+                    backgroundColor: ['#f44336', '#ffeb3b', '#4caf50', '#2196f3', '#9c27b0']
+                }]
             },
-            options: { plugins: { title: { display: true, text: 'Distribución por Terminal' } } }
+            options: { responsive: true, plugins: { title: { display: true, text: 'INSPS. POR TERMINAL' } } }
         });
     }
 </script>
+
 </body>
 </html>
