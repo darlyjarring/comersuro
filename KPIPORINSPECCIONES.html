@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Power BI Web - Control de Inspecciones</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #263238; --accent: #00796b; --bg: #eceff1; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 13px; }
+        .container { max-width: 1400px; margin: auto; }
+        
+        /* Header & Input */
+        .header { background: var(--primary); color: white; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        #inputSection { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; margin-bottom: 20px; }
+        textarea { width: 100%; height: 60px; border: 1px solid #90a4ae; border-radius: 5px; padding: 10px; margin-bottom: 10px; }
+        .btn-main { background: var(--accent); color: white; border: none; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        /* Panel de Filtros (Slicers) */
+        #dashboardSection { display: none; }
+        .slicer-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #cfd8dc; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .slicer-box label { display: block; font-weight: bold; margin-bottom: 5px; color: #37474f; }
+        .slicer-box select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #90a4ae; }
+
+        /* Layout */
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .kpi-card { background: white; padding: 15px; border-radius: 8px; text-align: center; border-left: 5px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .kpi-card h3 { margin: 0; font-size: 11px; color: #546e7a; text-transform: uppercase; }
+        .kpi-card p { margin: 5px 0 0; font-size: 22px; font-weight: bold; color: var(--primary); }
+
+        .charts-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .chart-box { background: white; padding: 15px; border-radius: 8px; height: 300px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        .table-container { background: white; padding: 15px; border-radius: 8px; height: 250px; overflow-y: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f5f7f9; position: sticky; top: 0; padding: 10px; border-bottom: 2px solid #cfd8dc; text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <strong>⚡ INTERFAZ DINÁMICA DE INSPECCIONES</strong>
+        <button id="btnNew" style="display:none;" onclick="location.reload()">Cargar Nuevos Datos</button>
+    </div>
+
+    <div id="inputSection">
+        <textarea id="rawInput" placeholder="Pega los datos de Excel aquí..."></textarea>
+        <button class="btn-main" onclick="inicializarDatos()">IMPORTAR DATOS</button>
+    </div>
+
+    <div id="dashboardSection">
+        <div class="slicer-panel">
+            <div class="slicer-box">
+                <label>📍 Destino</label>
+                <select id="filtDest" onchange="aplicarFiltros()"><option value="ALL">Todos los Destinos</option></select>
+            </div>
+            <div class="slicer-box">
+                <label>🏗️ Terminal</label>
+                <select id="filtTerm" onchange="aplicarFiltros()"><option value="ALL">Todas las Terminales</option></select>
+            </div>
+            <div class="slicer-box">
+                <label>📅 Semana</label>
+                <select id="filtSem" onchange="aplicarFiltros()"><option value="ALL">Todas las Semanas</option></select>
+            </div>
+        </div>
+        
+        <div class="kpi-row">
+            <div class="kpi-card"><h3>Contenedores</h3><p id="kpi-total">0</p></div>
+            <div class="kpi-card"><h3>Horas Totales</h3><p id="kpi-sum">0.00h</p></div>
+            <div class="kpi-card"><h3>Promedio por Insp.</h3><p id="kpi-avg">0:00</p></div>
+            <div class="kpi-card"><h3>Carga de Trabajo</h3><p id="kpi-count">0 Insp.</p></div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-box"><canvas id="lineChart"></canvas></div>
+            <div class="chart-box"><canvas id="barChart"></canvas></div>
+            <div class="chart-box"><canvas id="pieChart"></canvas></div>
+        </div>
+
+        <div class="table-container">
+            <table id="mainTable">
+                <thead>
+                    <tr><th>FECHA</th><th>CONTENEDOR</th><th>DURACIÓN</th><th>DESTINO</th><th>TERMINAL</th><th>SEMANA</th></tr>
+                </thead>
+                <tbody id="tableContent"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let rawData = [];
+    let charts = {};
+
+    function inicializarDatos() {
+        const input = document.getElementById('rawInput').value.trim();
+        if (!input) return;
+
+        const rows = input.split('\n');
+        const dSet = new Set(), tSet = new Set(), sSet = new Set();
+
+        rawData = rows.map(row => {
+            const c = row.split('\t');
+            if (c.length < 11) return null;
+            
+            let tParts = c[5].trim().split(':');
+            let mins = (parseInt(tParts[0]) || 0) * 60 + (parseInt(tParts[1]) || 0);
+
+            dSet.add(c[9]); tSet.add(c[11]); sSet.add(c[8]);
+
+            return {
+                fecha: c[0], cont: c[2], tiempoStr: c[5], 
+                mins: mins, dest: c[9], term: c[11], sem: c[8]
+            };
+        }).filter(r => r !== null);
+
+        // Llenar Selectores (Slicers)
+        llenarSelector('filtDest', dSet);
+        llenarSelector('filtTerm', tSet);
+        llenarSelector('filtSem', sSet);
+
+        document.getElementById('inputSection').style.display = 'none';
+        document.getElementById('btnNew').style.display = 'block';
+        document.getElementById('dashboardSection').style.display = 'block';
+
+        aplicarFiltros();
+    }
+
+    function llenarSelector(id, set) {
+        const sel = document.getElementById(id);
+        Array.from(set).sort().forEach(val => {
+            let opt = document.createElement('option');
+            opt.value = val; opt.innerText = val;
+            sel.appendChild(opt);
+        });
+    }
+
+    function aplicarFiltros() {
+        const fD = document.getElementById('filtDest').value;
+        const fT = document.getElementById('filtTerm').value;
+        const fS = document.getElementById('filtSem').value;
+
+        const filtered = rawData.filter(r => {
+            return (fD === 'ALL' || r.dest === fD) &&
+                   (fT === 'ALL' || r.term === fT) &&
+                   (fS === 'ALL' || r.sem === fS);
+        });
+
+        actualizarUI(filtered);
+    }
+
+    function actualizarUI(data) {
+        let totalMins = 0;
+        let dests = {}, terms = {}, trend = {}, trendCount = {};
+
+        data.forEach(r => {
+            totalMins += r.mins;
+            dests[r.dest] = (dests[r.dest] || 0) + 1;
+            terms[r.term] = (terms[r.term] || 0) + 1;
+            trend[r.fecha] = (trend[r.fecha] || 0) + r.mins;
+            trendCount[r.fecha] = (trendCount[r.fecha] || 0) + 1;
+        });
+
+        // KPIs
+        document.getElementById('kpi-total').innerText = data.length;
+        document.getElementById('kpi-sum').innerText = (totalMins/60).toFixed(2) + "h";
+        let avg = data.length ? Math.round(totalMins / data.length) : 0;
+        document.getElementById('kpi-avg').innerText = `${Math.floor(avg/60)}h ${avg%60}m`;
+        document.getElementById('kpi-count').innerText = data.length + " Insp.";
+
+        // Tabla
+        document.getElementById('tableContent').innerHTML = data.map(d => 
+            `<tr><td>${d.fecha}</td><td>${d.cont}</td><td><b>${d.tiempoStr}</b></td><td>${d.dest}</td><td>${d.term}</td><td>Sem ${d.sem}</td></tr>`
+        ).join('');
+
+        renderCharts(dests, terms, trend, trendCount);
+    }
+
+    function renderCharts(dests, terms, trend, trendCount) {
+        const colors = ['#00796b', '#c62828', '#1565c0', '#ef6c00', '#6a1b9a', '#2e7d32'];
+        
+        // Gráfico Líneas (Horas)
+        if(charts.line) charts.line.destroy();
+        charts.line = new Chart(document.getElementById('lineChart'), {
+            type: 'line',
+            data: { 
+                labels: Object.keys(trend), 
+                datasets: [{ label: 'Horas', data: Object.values(trend).map(m => (m/60).toFixed(2)), borderColor: '#00796b', fill: true, backgroundColor: 'rgba(0,121,107,0.1)', tension: 0.3 }]
+            },
+            options: { maintainAspectRatio: false, plugins: { tooltip: { callbacks: { footer: (items) => 'Inspecciones: ' + trendCount[items[0].label] } } } }
+        });
+
+        // Gráfico Barras (Destinos)
+        if(charts.bar) charts.bar.destroy();
+        charts.bar = new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: { labels: Object.keys(dests), datasets: [{ label: 'Cant.', data: Object.values(dests), backgroundColor: colors }] },
+            options: { maintainAspectRatio: false }
+        });
+
+        // Gráfico Dona (Terminales)
+        if(charts.pie) charts.pie.destroy();
+        const total = Object.values(terms).reduce((a,b)=>a+b,0);
+        charts.pie = new Chart(document.getElementById('pieChart'), {
+            type: 'doughnut',
+            data: { 
+                labels: Object.keys(terms).map(k => `${k}: ${Math.round((terms[k]/total)*100)}%`),
+                datasets: [{ data: Object.values(terms), backgroundColor: colors }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+</script>
+</body>
+</html>
